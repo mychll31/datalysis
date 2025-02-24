@@ -19,20 +19,20 @@ const UploadPage = () => {
       </div>
       
       <div className="w-2/5 mt-8 text-left">
-        <p className="text-lg mb-2">Upload Avatar</p>
+        <p className="text-lg mb-2">Upload CSV File</p>
         <div className="border-dashed border-2 border-gray-400 bg-gray-900 bg-opacity-25 hover:border-white hover:bg-gray-900 hover:bg-opacity-50 transition duration-500 rounded-lg text-center p-6 relative">
           <div className="mx-auto mb-4 bg-uploadIcon bg-contain bg-center bg-no-repeat py-10 w-14"/>
           <label htmlFor="upload-image" className="cursor-pointer block text-gray-300 hover:text-white transition">Drag and drop or click to upload</label>
           <input type="file" id="upload-image" accept="image/*" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
         </div>
         
-        <p className="text-lg mt-4">Name of Company</p>
+        <p className="text-lg mt-4 mb-2">Name of Company</p>
         <input type="text" className="w-full p-3 bg-gray-900 bg-opacity-25 border-2  border-gray-400 rounded-lg text-white placeholder-gray-400 focus:outline-double focus:outline-4 outline-white hover:border-white transition duration-300" placeholder="Enter company name" />
         
-        <p className="text-lg mt-4">Contact Number</p>
+        <p className="text-lg mt-4 mb-2 ">Contact Number</p>
         <input type="text" className="w-full p-3 bg-gray-900 bg-opacity-25 border-2  border-gray-400 rounded-lg text-white placeholder-gray-400 focus:outline-double focus:outline-4 outline-white hover:border-white transition duration-300" placeholder="Enter contact number" />
         
-        <p className="text-lg mt-4">Email Address</p>
+        <p className="text-lg mt-4 mb-2 ">Email Address</p>
         <input type="text" className="w-full p-3 bg-gray-900 bg-opacity-25 border-2  border-gray-400 rounded-lg text-white placeholder-gray-400 focus:outline-double focus:outline-4 outline-white hover:border-white transition duration-300" placeholder="Enter email address" />
         
         <button className="w-full mt-6 bg-yellow-500 text-black font-bold py-3 rounded-lg hover:bg-yellow-600 transition duration-300">Get your Insights!</button>

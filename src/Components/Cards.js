@@ -1,6 +1,6 @@
 const Cards = () => {
     return(
-    <div className="flex justify-center items-start min-h-screen">
+    <div className="flex justify-center items-start ">
         <div className="max-w-[720px] mx-8">
             <div className="block mb-11 mx-auto border-b border-slate-300 pb-2 max-w-[360px]">
                 
