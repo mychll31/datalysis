@@ -1,5 +1,5 @@
 import React from 'react';
-import NavBar from '../Components/Navbar';
+import NavBar from '../Components/Navbar/Navbar';
 import CollapsibleSidebar from '../Components/Sidebar';
 import { GiHamburgerMenu } from "react-icons/gi";
 
