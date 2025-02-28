@@ -1,20 +1,49 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";  // Import useNavigate
 
 const LoginModal = ({ isOpen, setIsOpen, setIsSignUpOpen, setIsForgotPasswordOpen, handleGoogleSignIn }) => {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
 
+    const navigate = useNavigate(); // ✅ Initialize useNavigate here
+
     if (!isOpen) return null;
+
+    const getCSRFToken = async () => {
+        try {
+            const response = await fetch("http://localhost:8000/api/csrf/", {
+                method: "GET",
+                credentials: "include", // Ensures cookies are sent
+            });
+
+            if (!response.ok) throw new Error("Failed to fetch CSRF token");
+
+            const data = await response.json();
+            return data.csrfToken;
+        } catch (error) {
+            console.error("CSRF fetch error:", error);
+            return null;
+        }
+    };
 
     const handleSubmit = async () => {
         setError(""); // Clear previous errors
+
+        const csrfToken = await getCSRFToken();
+        if (!csrfToken) {
+            setError("CSRF token fetch failed.");
+            return;
+        }
+
         try {
             const response = await fetch("http://localhost:8000/api/login/", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
+                    "X-CSRFToken": csrfToken, // Include CSRF token
                 },
+                credentials: "include", // Ensure cookies are sent
                 body: JSON.stringify({ email, password }),
             });
 
@@ -23,6 +52,7 @@ const LoginModal = ({ isOpen, setIsOpen, setIsSignUpOpen, setIsForgotPasswordOpe
             if (response.ok) {
                 console.log("Login successful:", data);
                 setIsOpen(false); // Close modal on success
+                navigate("/upload-page"); // ✅ Redirect to Upload-Page
             } else {
                 setError(data.error || "Login failed. Please try again.");
             }
@@ -76,7 +106,7 @@ const LoginModal = ({ isOpen, setIsOpen, setIsSignUpOpen, setIsForgotPasswordOpe
                                     <span>Sign in with Google</span>
                                 </button>
 
-                                <button onClick={handleSubmit} className="bg-cyan-800 text-white rounded-md px-4 py-2 w-full">Submit</button>
+                                <button onClick={handleSubmit} type='submit' className="bg-cyan-800 text-white rounded-md px-4 py-2 w-full">Submit</button>
                                 <button className="outline-cyan-800 outline text-cyan-800 rounded-md px-3 py-1 w-full" onClick={() => { setIsOpen(false); setIsSignUpOpen(true); }}>Sign Up</button><br />
                                 <button className="text-gray-600 underline" onClick={() => { setIsOpen(false); setIsForgotPasswordOpen(true); }}>Forgot Password?</button><br />
                                 <button className="mt-3 text-gray-600 underline" onClick={() => setIsOpen(false)}>Close</button>
