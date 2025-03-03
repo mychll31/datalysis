@@ -3,6 +3,7 @@ import React from "react";
 import "./App.css";
 import Home from "./Pages/home";
 import UploadPage from "./Pages/upload";
+import Display from "./Pages/display";
 import EmailForm from "./Components/EmailForm"; // Import the new component
 
 function App() {
@@ -11,6 +12,7 @@ function App() {
             <Routes>
                 <Route path="/" element={<Home />} />
                 <Route path="/Upload-Page" element={<UploadPage />} />
+                <Route path="/Display-Page" element={<Display />} />
                 <Route path="/email" element={<EmailForm />} /> {/* New route for email form */}
             </Routes>
         </Router>

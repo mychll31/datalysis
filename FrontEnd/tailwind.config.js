@@ -1,5 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
+  darkMode: "class",
   mode: 'jit',
   content: [
     './src/**/*.{js,jsx,ts,tsx}'
@@ -9,6 +10,7 @@ module.exports = {
       scrollBehavior: ['smooth'],
       backgroundImage:{
         bannerImg: "url('./images/Homepage.png')",
+        displayBg: "url('./images/Display Background.png')",
         iconImg1: "url('./images/image 6.png')",
         iconImg2: "url('./images/image 5.png')",
         iconImg3: "url('./images/image 4.png')",
