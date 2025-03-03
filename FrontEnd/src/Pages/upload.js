@@ -4,6 +4,14 @@ import CollapsibleSidebar from "../Components/Sidebar";
 
 const UploadPage = () => {
   const [username, setUsername] = useState("");
+  //Added part here variable for accepting file
+  const [file, setFile] = useState(null);
+  const [csvData, setCsvData] = useState([]);
+  const [columns, setColumns] = useState([]);
+  const [rowsCount, setRowsCount] = useState(0);
+  const [showModal, setShowModal] = useState(false);
+  const [totalDataPoints, setTotalDataPoints] = useState(0);
+  //Ends Here 
 
   useEffect(() => {
     // Fetch user info from the backend
@@ -12,10 +20,12 @@ const UploadPage = () => {
         const response = await fetch("http://localhost:8000/api/user-info/", {
           method: "GET",
           credentials: "include", // Ensure cookies are sent
+          mode: "cors",
         });
 
         if (response.ok) {
           const data = await response.json();
+          console.log("Fetched user info:", data);
           setUsername(data.username);
         } else {
           console.error("Failed to fetch user info");
@@ -58,8 +68,8 @@ const UploadPage = () => {
         <p className="text-lg mb-2">Upload CSV File</p>
         <div className="border-dashed border-2 border-gray-400 bg-gray-900 bg-opacity-25 hover:border-white hover:bg-gray-900 hover:bg-opacity-50 transition duration-500 rounded-lg text-center p-6 relative">
           <div className="mx-auto mb-4 bg-uploadIcon bg-contain bg-center bg-no-repeat py-10 w-14"/>
-          <label htmlFor="upload-image" className="cursor-pointer block text-gray-300 hover:text-white transition">Drag and drop or click to upload</label>
-          <input type="file" id="upload-image" accept="image/*" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
+          <label htmlFor="upload-csv" className="cursor-pointer block text-gray-300 hover:text-white transition">Drag and drop or click to upload</label>
+          <input type="file" id="upload-csv" accept="image/*" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" /> {/*the trigger point for uploading a csv*/}
         </div>
 
         {/* Other Input Fields */}
