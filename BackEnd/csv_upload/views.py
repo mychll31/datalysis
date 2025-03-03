@@ -12,12 +12,12 @@ def upload_csv(request):
         
         try:
             df = pd.read_csv(csv_file)
-
+              #this is just a sample it should not return anything in the inspect mode 
             richest_country = df['Company Name'].max() if 'Company Name' in df.columns else None
             return JsonResponse({
                 'riches_country': richest_country,
                 'message': 'File processed successfully'
-            })
+            }) #this is just a sample it should not return anything in the inspect mode 
         except Exception as e:
             return JsonResponse({'error': str(e)} , status=400)
     else:
