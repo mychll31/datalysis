@@ -9,6 +9,6 @@ urlpatterns = [
     path("api/login/", login_view, name="login"),
     path("api/csrf/", csrf_token_view, name="csrf_token"),
     path("api/signup/", signup, name="signup"),  # Add CSRF token endpoint
-    path('api/user-info/', user_info, name='user_info'), #This user info endpoint
+    path('api/user-info/<int:user_id>', user_info, name='user_info'), #This user info endpoint
 ]
 
