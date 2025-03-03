@@ -139,3 +139,7 @@ CSRF_TRUSTED_ORIGINS = [
 ]
 
 CORS_ALLOW_CREDENTIALS = True
+
+CSRF_COOKIE_HTTPONLY = False  # ✅ Allows frontend JavaScript to access it
+CSRF_COOKIE_SECURE = False    # ✅ Disable in development (HTTPS required in production)
+
