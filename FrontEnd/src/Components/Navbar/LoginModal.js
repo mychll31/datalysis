@@ -46,7 +46,7 @@ const LoginModal = ({ isOpen, setIsOpen, setIsSignUpOpen, setIsForgotPasswordOpe
                 credentials: "include", // Ensure cookies are sent
                 body: JSON.stringify({ email, password }),
             });
-            console.log("email:", email); //log to check the email during login
+
             const data = await response.json();
 
             if (response.ok) {

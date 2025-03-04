@@ -6,7 +6,7 @@ const CollapsibleSidebar = () => {
   const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
 
   return (
-    <div className="absolute left-0">
+    <div className="fixed left-0">
       {/* Sidebar */}
       <div
         className={`text-white h-screen p-5 flex flex-col transition-all duration-300 ${
