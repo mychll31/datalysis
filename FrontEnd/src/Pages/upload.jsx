@@ -27,7 +27,9 @@ const UploadPage = () => {
           const data = await response.json();
           setUsername(data.username);
         } else {
-          console.error("Failed to fetch user info");
+          console.error("Failed to fetch user info. Status:", response.status);
+          const errorData = await response.json();
+          console.error("Error response:", errorData);
         }
       } catch (error) {
         console.error("Error fetching user info:", error);
@@ -134,8 +136,16 @@ const UploadPage = () => {
 
         <p className="text-lg mt-4 mb-2">Contact Number</p>
         <input type="text" className="w-full p-3 bg-gray-900 bg-opacity-25 border-2 border-gray-400 rounded-lg text-white placeholder-gray-400 focus:outline-double focus:outline-4 outline-white hover:border-white transition duration-300" placeholder="Enter contact number" />
-
-        <button onClick={handleUpload} className="w-full mt-6 bg-yellow-500 text-black font-bold py-3 rounded-lg hover:bg-yellow-600 transition duration-300">
+        <button
+          onClick={() => {
+            if (!file) {  
+              alert("Please upload a CSV file before proceeding!"); {/* Prevent to upload invalid null link */ }
+            } else {
+              handleUpload();
+            }
+          }}
+          className="w-full mt-6 bg-yellow-500 text-black font-bold py-3 rounded-lg hover:bg-yellow-600 transition duration-300"
+        >
           Get your Insights!
         </button>
       </div>
