@@ -23,8 +23,11 @@ const UploadPage = () => {
           mode: "cors",
         });
 
+        console.log("Response Status:", response.status);
+
         if (response.ok) {
           const data = await response.json();
+          console.log("Fetch User Data:", data);
           setUsername(data.username);
         } else {
           console.error("Failed to fetch user info. Status:", response.status);

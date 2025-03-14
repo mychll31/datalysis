@@ -29,7 +29,11 @@ const NavBar = () => {
     const toggleDarkMode = () => {
         setAnimating(true);
         setTimeout(() => {
-            setDarkMode(!darkMode);
+            setDarkMode(prevMode => {
+                const newMode = !prevMode;
+                localStorage.setItem("theme", newMode ? "dark" : "light");
+                return newMode;
+            });
             setAnimating(false);
         }, 300); // Delay animation
     };

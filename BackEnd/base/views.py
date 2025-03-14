@@ -3,11 +3,22 @@ from django.http import JsonResponse
 from django.middleware.csrf import get_token
 from django.views.decorators.csrf import csrf_exempt
 import json
-from django.contrib.auth.models import User
 from django.contrib.auth import login
 
 
 from django.contrib.auth.models import User  # Import User model
+
+from django.contrib.auth import logout
+
+@csrf_exempt
+def logout_view(request):
+    if request.method == "POST":
+        logout(request)
+        response = JsonResponse({"message": "Logged out successfully"})
+        response.delete_cookie("sessionid")  # ✅ Delete session cookie
+        return response
+    return JsonResponse({"error": "Invalid request method"}, status=405)
+
 
 def csrf_token_view(request):
     """Returns the CSRF token to the frontend."""
@@ -35,7 +46,8 @@ def login_view(request):
             user = authenticate(username=username, password=password)
 
             if user is not None:
-                return JsonResponse({"message": "Login successful"}, status=200)
+                login(request, user)
+                return JsonResponse({"message": "Login successful", "username": user.username}, status=200)
             else:
                 return JsonResponse({"error": "Invalid credentials"}, status=400)
 
@@ -43,6 +55,7 @@ def login_view(request):
             return JsonResponse({"error": "Invalid request"}, status=400)
 
     return JsonResponse({"error": "Invalid request method"}, status=405)
+
 
 def signup(request):
     if request.method != "POST":

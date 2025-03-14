@@ -1,12 +1,29 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";  // Import useNavigate
 
 const LoginModal = ({ isOpen, setIsOpen, setIsSignUpOpen, setIsForgotPasswordOpen, handleGoogleSignIn }) => {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const[rememberMe, setRememberMe] = useState(false);
     const [error, setError] = useState("");
 
     const navigate = useNavigate(); // ✅ Initialize useNavigate here
+
+    useEffect(() => {
+        const savedRememberMe = localStorage.getItem("rememberMe") === "true";
+        setRememberMe(savedRememberMe);
+
+        if (savedRememberMe) {
+            const savedEmail = localStorage.getItem("rememberedEmail") || "";
+            const savedPassword = localStorage.getItem("rememberedPassword") || "";
+
+            if (savedEmail) setEmail(savedEmail);
+            if (savedPassword) setPassword(savedPassword);
+        }else{
+            setEmail("");
+            setPassword("");
+        }
+    }, []);
 
     if (!isOpen) return null;
 
@@ -51,6 +68,20 @@ const LoginModal = ({ isOpen, setIsOpen, setIsSignUpOpen, setIsForgotPasswordOpe
 
             if (response.ok) {
                 console.log("Login successful:", data);
+                localStorage.setItem("username", data.username);
+
+                if (rememberMe) {
+                    console.log("Saving Login Info....");
+                    localStorage.setItem("rememberedEmail", email);
+                    localStorage.setItem("rememberedPassword", password);
+                    localStorage.setItem("rememberMe", "true");
+                } else {
+                    console.log("Clearing Login Info....");
+                    localStorage.removeItem("rememberedEmail");
+                    localStorage.removeItem("rememberedPassword");
+                    localStorage.removeItem("rememberMe");
+                }
+
                 setIsOpen(false); // Close modal on success
                 navigate("/upload-page"); // ✅ Redirect to Upload-Page
             } else {
@@ -76,7 +107,8 @@ const LoginModal = ({ isOpen, setIsOpen, setIsSignUpOpen, setIsForgotPasswordOpe
                                 <div className="relative">
                                     <input 
                                         id="email" 
-                                        type="text"  
+                                        type="text"
+                                        autoComplete="off"
                                         value={email}
                                         onChange={(e) => setEmail(e.target.value)}
                                         className="peer placeholder-transparent h-10 w-full border-b-2 border-gray-300 text-gray-900 focus:outline-none focus:border-cyan-700" 
@@ -87,13 +119,24 @@ const LoginModal = ({ isOpen, setIsOpen, setIsSignUpOpen, setIsForgotPasswordOpe
                                 <div className="relative">
                                     <input 
                                         id="password" 
-                                        type="password" 
+                                        type="password"
+                                        autoComplete="new-password"
                                         value={password}
                                         onChange={(e) => setPassword(e.target.value)}
                                         className="peer placeholder-transparent h-10 w-full border-b-2 border-gray-300 text-gray-900 focus:outline-none focus:border-cyan-700" 
                                         placeholder="Password" 
                                     />
                                     <label htmlFor="password" className="absolute left-0 -top-3.5 text-gray-600 text-sm peer-placeholder-shown:top-2 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 transition-all peer-focus:-top-3.5 peer-focus:text-sm peer-focus:text-gray-600">Password</label>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                    <input
+                                        type="checkbox"
+                                        id="rememberMe"
+                                        checked={rememberMe}
+                                        onChange={(e) => setRememberMe(e.target.checked)}
+                                        className="h-4 w-4 text-cyan-800 border border-gray-300 rounded-md focus:ring-cyan-800"
+                                    />
+                                    <label htmlFor="rememberMe" className="text-gray-600">Remember me</label>
                                 </div>
 
                                 {error && <p className="text-red-500">{error}</p>}
