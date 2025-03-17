@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background-color: #f4f4f9;
+    }
+    .logout-link {
+        display: inline-block;
+        padding: 10px 15px;
+        background-color:rgb(51, 55, 107);
+        color: white;
+        text-decoration: none;
+        border-radius: 5px;
+    }
+    .logout-link:hover {
+        background-color:rgb(113, 104, 207);
+    }
+</style>
+
+<div class="content">
+    <h1>Home Page</h1>
+    <a href="{% url 'base:login' %}" class="logout-link">Logout</a>
+</div>
+
+{% endblock content %}
