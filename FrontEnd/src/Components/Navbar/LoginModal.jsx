@@ -83,7 +83,7 @@ const LoginModal = ({ isOpen, setIsOpen, setIsSignUpOpen, setIsForgotPasswordOpe
                 }
 
                 setIsOpen(false); // Close modal on success
-                navigate("/upload-page"); // ✅ Redirect to Upload-Page
+                navigate("/homepage"); // ✅ Redirect to Upload-Page
             } else {
                 setError(data.error || "Login failed. Please try again.");
             }
