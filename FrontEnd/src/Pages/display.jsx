@@ -68,14 +68,14 @@ const Display = () => {
                     <button className="w-36 h-24 mx-10 mb-5 text-xl bg-yellow-500 text-black font-bold rounded-lg hover:bg-yellow-600 transition duration-300">
                         UPLOAD <br /> ANOTHER <br /> CSV
                     </button>
-                    <button className="w-36 h-12 mx-10 mb-3 text-lg bg-yellow-500 text-black font-bold rounded-lg hover:bg-yellow-600 transition duration-300">
+                    <button className="w-36 h-12 mx-10 mb-3 bg-yellow-500 text-black font-bold rounded-lg hover:bg-yellow-600 transition duration-300">
                         APPLY
                     </button>
                 </div>
             </div>
 
             {/* Display CSV Table */}
-            <div className="w-2/3 my-10 ">
+            <div className="w-10/12 flex justify-center my-10 ">
                 {csvData.length > 0 ? (
                     <CsvTable columns={columns} csvData={csvData} />
                 ) : (
