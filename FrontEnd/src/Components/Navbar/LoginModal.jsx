@@ -1,11 +1,16 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";  // Import useNavigate
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+
+
 
 const LoginModal = ({ isOpen, setIsOpen, setIsSignUpOpen, setIsForgotPasswordOpen, handleGoogleSignIn }) => {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const[rememberMe, setRememberMe] = useState(false);
     const [error, setError] = useState("");
+    const [isLoggingIn, setIsLoggingIn] = useState(false);
 
     const navigate = useNavigate(); // ✅ Initialize useNavigate here
 
@@ -46,10 +51,12 @@ const LoginModal = ({ isOpen, setIsOpen, setIsSignUpOpen, setIsForgotPasswordOpe
 
     const handleSubmit = async () => {
         setError(""); // Clear previous errors
+        setIsLoggingIn(true); // Set loading state
 
         const csrfToken = await getCSRFToken();
         if (!csrfToken) {
             setError("CSRF token fetch failed.");
+            setIsLoggingIn(false); // stop loading state
             return;
         }
 
@@ -82,14 +89,20 @@ const LoginModal = ({ isOpen, setIsOpen, setIsSignUpOpen, setIsForgotPasswordOpe
                     localStorage.removeItem("rememberMe");
                 }
 
+                toast.success("LOGIN SUCCESSFULLY", { autoClose: 3000 });
+
+                setTimeout(() => {
                 setIsOpen(false); // Close modal on success
                 navigate("/homepage"); // ✅ Redirect to Upload-Page
+                }, 3000);
             } else {
                 setError(data.error || "Login failed. Please try again.");
             }
         } catch (err) {
             setError("Something went wrong. Please try again.");
             console.error(err);
+        } finally {
+            setIsLoggingIn(false); // Stop loading state
         }
     };
 
@@ -157,7 +170,21 @@ const LoginModal = ({ isOpen, setIsOpen, setIsSignUpOpen, setIsForgotPasswordOpe
                                     <span>Sign in with Google</span>
                                 </button>
 
-                                <button onClick={handleSubmit} type='submit' className="bg-cyan-800 text-white rounded-md px-4 py-2 w-full">Submit</button>
+                                <button 
+                                    onClick={handleSubmit} 
+                                    disabled={isLoggingIn} 
+                                    className="bg-cyan-800 text-white rounded-md px-4 py-2 w-full flex justify-center items-center"
+                                >
+                                    {isLoggingIn ? (
+                                        <>
+                                            <svg className="animate-spin h-5 w-5 mr-2 text-white" viewBox="0 0 24 24">
+                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+                                            </svg>
+                                            Logging in...
+                                        </>
+                                    ) : "Login"}
+                                </button>
                                 <button className="outline-cyan-800 outline text-cyan-800 rounded-md px-3 py-1 w-full" onClick={() => { setIsOpen(false); setIsSignUpOpen(true); }}>Sign Up</button><br />
                                 <button className="text-gray-600 underline" onClick={() => { setIsOpen(false); setIsForgotPasswordOpen(true); }}>Forgot Password?</button><br />
                                 <button className="mt-3 text-gray-600 underline" onClick={() => setIsOpen(false)}>Close</button>
@@ -166,6 +193,7 @@ const LoginModal = ({ isOpen, setIsOpen, setIsSignUpOpen, setIsForgotPasswordOpe
                     </div>
                 </div>
             </div>
+            <ToastContainer position="top-right" autoClose={3000} />
         </div>
     );
 };
