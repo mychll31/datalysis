@@ -1,5 +1,9 @@
 import { useState } from "react";
 import { Menu, Home, Settings, User, LogOut, Loader } from "lucide-react";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+
+
 
 
 const CollapsibleSidebar = () => {
@@ -29,7 +33,11 @@ const CollapsibleSidebar = () => {
             localStorage.removeItem("rememberMe");
         }
 
+        toast.success("LOGOUT SUCCESSFULLY ", { autoClose: 3000 });
+        
+        setTimeout(() => {
         window.location.href = "/";
+        }, 3000);
 
       } else {
         console.error("Logout failed");
@@ -79,7 +87,9 @@ const CollapsibleSidebar = () => {
           </div>
         </div>
       )}
+      <ToastContainer position="top-right" autoClose={3000} />
     </div>
+    
   );
 };
 
@@ -89,6 +99,7 @@ const SidebarItem = ({ icon, label, isOpen, href, onClick }) => {
       {icon}
       {isOpen ? <a href={href} className="text-lg p-2 rounded-lg">{label}</a> : null}
     </div>
+    
   );
 };
 
