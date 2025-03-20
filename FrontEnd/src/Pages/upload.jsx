@@ -4,6 +4,9 @@ import CollapsibleSidebar from "../Components/Sidebar";
 import axios from 'axios';
 import Papa from 'papaparse';
 import UploadModal from "../Components/UploadModal"; // Import the separated modal
+import { href } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+
 
 const UploadPage = () => {
   const [username, setUsername] = useState("");
@@ -66,28 +69,28 @@ const UploadPage = () => {
     }
   };
 
-  const handleUpload = () => {
+  const handleUpload = async () => {
     if (!file) return;
 
     const formData = new FormData();
     formData.append("file", file);
 
-    axios
-      .post("http://127.0.0.1:8000/upload-csv/", formData)
-      .then((response) => {
-        console.log("The upload is done", response.data);
-      })
-      .catch((error) => {
-        console.log("An error occurred during upload:", error);
-      });
+    try {
+        const response = await axios.post("http://127.0.0.1:8000/upload-csv/", formData);
+        console.log("Upload successful", response.data);
+    } catch (error) {
+        console.error("Upload error:", error);
+        throw error;  // Ensure errors are caught in the button function
+    }
   };
+
 
   const handleConfirm = () => {
     if (!file) return;
     console.log("File to be uploaded:", file.name);
     setShowModal(false);
   };
-
+  const navigate = useNavigate();
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-cover bg-center bg-uploadPage bg-gray-900 text-white font-inter">
       <div className="ml-10 w-screen">
@@ -140,17 +143,25 @@ const UploadPage = () => {
         <p className="text-lg mt-4 mb-2">Contact Number</p>
         <input type="text" className="w-full p-3 bg-gray-900 bg-opacity-25 border-2 border-gray-400 rounded-lg text-white placeholder-gray-400 focus:outline-double focus:outline-4 outline-white hover:border-white transition duration-300" placeholder="Enter contact number" />
         <button
-          onClick={() => {
-            if (!file) {  
-              alert("Please upload a CSV file before proceeding!"); {/* Prevent to upload invalid null link */ }
-            } else {
-              handleUpload();
-            }
+          onClick={async () => {
+              if (!file) {  
+                  alert("Please upload a CSV file before proceeding!"); // Prevent navigation without file
+                  return;
+              }
+
+              try {
+                  await handleUpload();  // Upload the file first
+                  navigate("/Display-Page", { state: { csvData, columns } });  // Pass data
+              } catch (error) {
+                  console.error("Upload failed:", error);
+                  alert("Upload failed. Please try again.");
+              }
           }}
           className="w-full mt-6 bg-yellow-500 text-black font-bold py-3 rounded-lg hover:bg-yellow-600 transition duration-300"
         >
-          Get your Insights!
+            Get your Insights!
         </button>
+
       </div>
 
       <div className="h-32"></div>

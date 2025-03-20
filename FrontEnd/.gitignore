@@ -24,7 +24,7 @@ yarn-error.log*
 
 #Python bytecode
 *.pyc
-**/__pycache__/
+__pycache__/
 
 #database files
 *.sqlite3
