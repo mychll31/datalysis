@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"; // Import useEffect
 
-const SignUpModal = ({ isOpen, setIsOpen }) => {
+const SignUpModal = ({ isOpen, setIsOpen, setIsLoginOpen }) => {
     // ✅ Declare state at the top level
     const [username, setUsername] = useState(""); // Added username
     const [email, setEmail] = useState("");
@@ -161,7 +161,17 @@ const SignUpModal = ({ isOpen, setIsOpen }) => {
                         >
                             {loading ? "Signing up..." : "Create Account"}
                         </button>
-                        <button className="mt-3 text-gray-600 underline" onClick={() => setIsOpen(false)}>Close</button>
+                        <button
+                            className="mt-3 text-gray-600 underline"
+                            onClick={() => {
+                                setIsOpen(false); // Close the signup modal first
+                                setIsLoginOpen(true) // Open login modal after a short delay
+                            }}
+                        >
+                            Back
+                        </button>
+
+
                     </div>
                 </div>
             </div>

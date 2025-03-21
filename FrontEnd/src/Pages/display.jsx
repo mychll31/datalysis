@@ -6,6 +6,7 @@ import { LineGraph } from "../Components/Line";
 import CsvTable from "../Components/CsvTable"; // Import the new component
 import { PieChart } from "../Components/Pie"; 
 import { BarGraph } from "../Components/Bar";
+import StatisticsSummary from "../Components/StatisticSum";
 
 const Display = () => {
     const location = useLocation();
@@ -96,11 +97,13 @@ const Display = () => {
                     </div>
                 </div>
             </div>
-                <div className="w-1/2 ml-10 pb-10 ">
+                <div className="w-1/2 pb-10 ">
                     <div className="App bg-white border-gray-900 border-8 shadow-xl "> 
                         <BarGraph /> 
                     </div>
                 </div>
+            <h2 className="w-1/2 text-center text-lg text-gray-400 font-light ">Statistics Summary</h2>
+            <StatisticsSummary />
 
         </section>
     );
