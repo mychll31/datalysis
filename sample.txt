@@ -1,1 +1,11 @@
 Datalysis
+
+steps
+-git pull
+-create new branch
+-checkout newly created branch
+
+
+
+-git stash (save)
+-git stash pop (show)
