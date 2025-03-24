@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import NavBar from "../Components/Navbar/Navbar";
 import Cards from "../Components/Cards";
-
+import Team from "../Components/Team";
 
 const Home = () => {
   const [darkMode, setDarkMode] = useState(() => {
