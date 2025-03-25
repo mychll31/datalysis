@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"; // Import useEffect
 
-const SignUpModal = ({ isOpen, setIsOpen }) => {
+const SignUpModal = ({ isOpen, setIsOpen, setIsLoginOpen }) => {
     // ✅ Declare state at the top level
     const [username, setUsername] = useState(""); // Added username
     const [email, setEmail] = useState("");

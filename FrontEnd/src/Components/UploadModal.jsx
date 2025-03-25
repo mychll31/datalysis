@@ -28,15 +28,23 @@ const UploadModal = ({ show, onClose, file, columns, csvData, rowsCount, totalDa
                             </tr>
                         </thead>
                         <tbody>
-                            {csvData.map((row, rowIndex) => (
-                                <tr key={rowIndex} className="even:bg-gray-100 odd:bg-gray-300 hover:bg-gray-200">
-                                    {columns.map((col, colIndex) => (
-                                        <td key={colIndex} className="border border-gray-400 px-4 py-2">
-                                            {row[col]}
-                                        </td>
-                                    ))}
+                            {Array.isArray(csvData) && csvData.length > 0 ? (
+                                csvData.map((row, rowIndex) => (
+                                    <tr key={rowIndex} className="even:bg-gray-100 odd:bg-gray-300 hover:bg-gray-200">
+                                        {columns.map((col, colIndex) => (
+                                            <td key={colIndex} className="border border-gray-400 px-4 py-2">
+                                                {typeof row[col] === "object" ? JSON.stringify(row[col]) : row[col]}
+                                            </td>
+                                        ))}
+                                    </tr>
+                                ))
+                            ) : (
+                                <tr>
+                                    <td colSpan={columns.length} className="text-center py-4">
+                                        No data to display.
+                                    </td>
                                 </tr>
-                            ))}
+                            )}
                         </tbody>
                     </table>
                 </div>

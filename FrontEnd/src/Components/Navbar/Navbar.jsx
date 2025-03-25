@@ -81,6 +81,7 @@ const NavBar = () => {
             <SignUpModal 
                 isOpen={isSignUpOpen} 
                 setIsOpen={setIsSignUpOpen} 
+                setIsLoginOpen={setIsLoginOpen}
             />
         </nav>
     );
