@@ -8,6 +8,8 @@ const SignUpModal = ({ isOpen, setIsOpen }) => {
     const [confirmPassword, setConfirmPassword] = useState("");
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
+    const [step , setSteps] = useState(1);
+    const [code, setCode] = useState("");
 
     const fetchCsrfToken = async () => {
         try {
@@ -77,7 +79,8 @@ const SignUpModal = ({ isOpen, setIsOpen }) => {
     
             if (response.ok) {
                 console.log("Signup successful:", data);
-                setIsOpen(false);
+                setSteps(2);
+                // setIsOpen(false); removed modal should stay open to this point to show the email notice
             } else {
                 setError(data.error || "Signup failed. Try again.");
             }
@@ -90,12 +93,38 @@ const SignUpModal = ({ isOpen, setIsOpen }) => {
     };
     
     
+    const handleSignupCode = async (e) => {
+        e.preventDefault();
+
+        if (!code) return alert('Please enter the code.');
+          try {
+            const response = await fetch('http://localhost:8000/signup_verify/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, code })
+            });
+
+            const data = await response.json();
+            if (response.ok) {
+                alert('Code verified successfully.');
+                setSteps(3); // Move to Step 3
+            } else {
+                alert(data.error || 'An error occurred. Please try again.');
+            }
+
+        } catch (error) {
+            alert('Something went wrong.');
+        }
+    };
 
     return !isOpen ? null : (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
             <div className="relative py-3 sm:max-w-xl sm:mx-auto">
                 <div className="absolute inset-0 bg-gradient-to-r from-teal-300 to-teal-800 shadow-lg transform -skew-y-6 sm:skew-y-0 sm:-rotate-6 sm:rounded-3xl"></div>
                 <div className="relative px-4 py-10 bg-white shadow-lg sm:rounded-3xl sm:p-20">
+                    {/*Step 1*/}
+                    {step === 1 && (
+                        <>
                     <h1 className="text-2xl font-semibold text-gray-800">Sign Up</h1>
 
                     {error && <p className="text-red-500">{error}</p>}
@@ -161,11 +190,61 @@ const SignUpModal = ({ isOpen, setIsOpen }) => {
                         >
                             {loading ? "Signing up..." : "Create Account"}
                         </button>
+                    </div>
+                    </>
+                    )}
+
+                        {/*Step 2 Just telling user that he needs to verify his account*/}
+                        {step === 2 && (
+                            <> 
+                            <h2 className="text-2xl font-semibold text-gray-800">Almost there!</h2>
+
+                                <div className="py-8 space-y-6 text-gray-700">
+                                <p className="text-gray-600">An email has been sent to <strong className="text-gray-800">{email}</strong>. Please verify your email address to complete the sign up process.</p>
+                                <input
+                                            id="signup-code"
+                                            type="text"
+                                            className="peer placeholder-transparent h-10 w-full border-b-2 border-gray-300 text-gray-900 focus:outline-none focus:border-cyan-700"
+                                            placeholder="Verification Code"
+                                            value={code}
+                                            onChange={(e) => setCode(e.target.value)}
+                                        />
+                                        <label
+                                            htmlFor="signup-code"
+                                            className="absolute left-0 -top-3.5 text-gray-600 text-sm peer-placeholder-shown:top-2 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 transition-all peer-focus:-top-3.5 peer-focus:text-sm peer-focus:text-gray-600">
+                                            Email Address
+                                        </label>
+
+                                <button 
+                                    className="bg-cyan-800 text-white rounded-md px-4 py-2 w-full hover:bg-cyan-700 transition-colors"
+                                    onClick={handleSignupCode}>
+                                    Confirm
+                                </button>
+                                </div>
+                            </>
+
+                        )}
+
+                        {/*Step 3 WEEWWWW*/}
+                        {step === 3 && (
+                            <>
+                                <h2 className="text-2xl font-semibold text-gray-800">Sign up Complete!</h2>
+                                <div className="py-8 space-y-6 text-gray-700">
+                                <p className="text-gray-600">You have successfully signed up. You can now log in to your account.</p>
+                                <button
+                                    className="bg-cyan-800 text-white rounded-md px-4 py-2 w-full hover:bg-cyan-700 transition-colors"
+                                    onClick={() => setIsOpen(false)}>
+                                    Log In
+                                </button>
+                                </div>
+                            </>
+                        )}
+
+
                         <button className="mt-3 text-gray-600 underline" onClick={() => setIsOpen(false)}>Close</button>
                     </div>
                 </div>
             </div>
-        </div>
     );
 };
 
