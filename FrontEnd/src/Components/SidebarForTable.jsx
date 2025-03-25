@@ -1,9 +1,14 @@
 import { useState } from "react";
-import { Menu, Home, Settings, User, LogOut, ArrowLeft } from "lucide-react";
+import { Menu, Home, Settings, User, LogOut, ArrowLeft, ChevronLeft } from "lucide-react";
 
 const TableSidebar = () => {
   const [isOpen, setIsOpen] = useState(true);
   const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
+
+  // Function to handle "Go Back" action
+  const handleGoBack = () => {
+    window.history.back();
+  };
 
   return (
     <div className="fixed z-50 left-0">
@@ -23,24 +28,33 @@ const TableSidebar = () => {
           {isOpen ? <ArrowLeft className="w-9 h-9" /> : <Menu className="w-9 h-9" />}
         </button>
 
+        {/* Go Back Button */}
+        {isOpen && (
+          <div
+            className="flex items-center space-x-4 p-2 rounded-lg cursor-pointer hover:bg-gray-700 transition-colors duration-200"
+            onClick={handleGoBack}
+          >
+            <ChevronLeft className="w-5 h-5" />
+            <span>Go Back</span>
+          </div>
+        )}
+
         {/* Sidebar Items */}
         <nav className="flex flex-col space-y-4">
-          <SidebarItem icon={<Home />} label="Home" isOpen={isOpen} />
-          <SidebarItem icon={<User />} label="Profile" isOpen={isOpen} />
-          <SidebarItem icon={<Settings />} label="Settings" isOpen={isOpen} />
+          <SidebarItem label="Home" isOpen={isOpen} />
+          <SidebarItem label="Profile" isOpen={isOpen} />
+          <SidebarItem label="Insert Table" isOpen={isOpen} />
         </nav>
 
         {/* Logout Button */}
         <div className="mt-auto">
           <SidebarItem
-            icon={<LogOut />}
             label="Logout"
             isOpen={isOpen}
             onClick={() => setIsLogoutConfirmOpen(true)} // Open confirmation
           />
         </div>
       </div>
-
     </div>
   );
 };
@@ -52,10 +66,9 @@ const SidebarItem = ({ icon, label, isOpen, href, onClick }) => {
       className="flex items-center space-x-4 p-2 rounded-lg cursor-pointer hover:bg-gray-700 transition-colors duration-200"
       onClick={onClick}
     >
-
       {isOpen ? (
         <a href={href} className="text-lg p-2 rounded-lg">
-          insert table items here
+          {label}
         </a>
       ) : null}
     </div>
