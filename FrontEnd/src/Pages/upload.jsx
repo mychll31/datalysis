@@ -6,6 +6,8 @@ import Papa from 'papaparse';
 import UploadModal from "../Components/UploadModal";
 import { useNavigate } from "react-router-dom";
 import "./UploadPage.css";
+import { toast } from "react-toastify"; // Import toast
+import "react-toastify/dist/ReactToastify.css"; // Import CSS for toast
 
 const UploadPage = () => {
   const [username, setUsername] = useState("");
@@ -20,6 +22,9 @@ const UploadPage = () => {
   const [resetTransition, setResetTransition] = useState(false); // State to reset transition
   const [jsonLink, setJsonLink] = useState(""); // State to store JSON link
   const [error, setError] = useState(""); // State to store error messages
+  const [companyName, setCompanyName] = useState(""); // State to store company name
+  const [contactNumber, setContactNumber] = useState(""); // State to store contact number
+  const [errors, setErrors] = useState({}); // State to store form errors
 
   useEffect(() => {
     const fetchUserInfo = async () => {
@@ -143,14 +148,42 @@ const UploadPage = () => {
     }
   };
 
+  const validateForm = () => {
+    let errors = {};
+  
+    // Company Name Validation
+    if (!companyName.trim()) {
+      errors.companyName = "Company name is required.";
+    }
+  
+    // Contact Number Validation
+    const contactNumberPattern = /^09\d{9}$/; // Checks if it starts with 09 and has 11 digits
+    if (!contactNumber.trim()) {
+      errors.contactNumber = "Contact number is required.";
+    } else if (!contactNumberPattern.test(contactNumber)) {
+      errors.contactNumber = "Invalid contact number. Use format: 09XXXXXXXXX.";
+    }
+  
+    setErrors(errors);
+    return Object.keys(errors).length === 0; // Returns true if no errors
+  };
+  
+
   const handleUpload = async () => {
+    if (!validateForm()){
+      console.log("Validation failed! Errors:", errors);
+      return; // Stop function execution if validation fails
+    }
     if (fileType === "json-link") {
       // For JSON links, we don't need to upload a file
       console.log("JSON link data is ready for processing.");
       return;
     }
 
-    if (!file) return;
+    if (!file) {
+      setError("Please upload a file.");
+      return;
+    }
 
     const formData = new FormData();
     formData.append("file", file);
@@ -160,7 +193,7 @@ const UploadPage = () => {
         console.log("Upload successful", response.data);
     } catch (error) {
         console.error("Upload error:", error);
-        throw error;  // Ensure errors are caught in the button function
+        setError("Failed to upload file. Please try again.");
     }
   };
 
@@ -307,33 +340,87 @@ const UploadPage = () => {
         </div>
 
         <p className="text-lg mt-4 mb-2">Name of Company</p>
-        <input type="text" className="w-full p-3 bg-gray-900 bg-opacity-25 border-2 border-gray-400 rounded-lg text-white placeholder-gray-400 focus:outline-double focus:outline-4 outline-white hover:border-white transition duration-300" placeholder="Enter company name" />
+<input
+  type="text"
+  className={`w-full p-3 bg-gray-900 bg-opacity-25 border-2 ${
+    errors.companyName ? "border-red-500" : "border-gray-400"
+  } rounded-lg text-white placeholder-gray-400 focus:outline-double focus:outline-4 outline-white hover:border-white transition duration-300`}
+  placeholder="Enter company name"
+  value={companyName}
+  onChange={(e) => setCompanyName(e.target.value)}
+/>
+{errors.companyName && <p className="text-red-500 text-sm">{errors.companyName}</p>}
 
-        <p className="text-lg mt-4 mb-2">Contact Number</p>
-        <input type="text" className="w-full p-3 bg-gray-900 bg-opacity-25 border-2 border-gray-400 rounded-lg text-white placeholder-gray-400 focus:outline-double focus:outline-4 outline-white hover:border-white transition duration-300" placeholder="Enter contact number" />
+<p className="text-lg mt-4 mb-2">Contact Number</p>
+<input
+  type="text"
+  className={`w-full p-3 bg-gray-900 bg-opacity-25 border-2 ${
+    errors.contactNumber ? "border-red-500" : "border-gray-400"
+  } rounded-lg text-white placeholder-gray-400 focus:outline-double focus:outline-4 outline-white hover:border-white transition duration-300`}
+  placeholder="Enter contact number"
+  value={contactNumber}
+  onChange={(e) => setContactNumber(e.target.value)}
+/>
+{errors.contactNumber && <p className="text-red-500 text-sm">{errors.contactNumber}</p>}
+
         <button
           onClick={async () => {
-              if (fileType === "json-link" && !csvData.length) {  
-                  alert("Please fetch JSON data before proceeding!"); // Prevent navigation without data
-                  return;
+            let newErrors = {};
+        
+            // Validation for company name
+            if (!companyName.trim()) newErrors.companyName = "Company name is required.";
+        
+            // Validation for contact number (check required first before format)
+            if (!contactNumber.trim()) {
+              newErrors.contactNumber = "Contact number is required.";
+            } else if (!/^09\d{9}$/.test(contactNumber)) {
+              newErrors.contactNumber = "Invalid contact number. Use format: 09XXXXXXXXX.";
+            }
+        
+            if (Object.keys(newErrors).length > 0) {
+              setErrors(newErrors);
+              return;
+            }
+        
+            setErrors({}); // Clear errors if validation passes
+        
+            try {
+              if (fileType === "json-link" && !csvData.length) {
+                alert("Please fetch JSON data before proceeding!");
+                return;
               }
-
-              if (fileType !== "json-link" && !file) {  
-                  alert("Please upload a file before proceeding!"); // Prevent navigation without file
-                  return;
+        
+              if (fileType !== "json-link" && !file) {
+                alert("Please upload a file before proceeding!");
+                return;
               }
-
+        
               try {
-                  await handleUpload();  // Upload the file or process JSON link
-                  navigate("/Display-Page", { state: { csvData, columns } });  // Pass data
+                await handleUpload(); // Process upload
+        
+                // Show toast notification
+                toast.success("Upload successful! Redirecting...", {
+                  position: "top-right",
+                  autoClose: 3000,
+                });
+        
+                // Wait for toast before navigating (optional delay)
+                setTimeout(() => {
+                  navigate("/Display-Page", { state: { csvData, columns } });
+                }, 3000);
+        
               } catch (error) {
-                  console.error("Upload failed:", error);
-                  alert("Upload failed. Please try again.");
+                console.error("Upload failed:", error);
+                toast.error("Upload failed. Please try again.");
               }
+            } catch (error) {
+              console.error("Error:", error);
+              toast.error("Error processing data. Please try again.");
+            }
           }}
           className="w-full mt-6 bg-yellow-500 text-black font-bold py-3 rounded-lg hover:bg-yellow-600 transition duration-300"
         >
-            Get your Insights!
+          Get your Insights!
         </button>
 
       </div>
