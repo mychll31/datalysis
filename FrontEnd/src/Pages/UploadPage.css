@@ -1,27 +1,23 @@
-
 .transition-all {
-  transition: all 0.5s ease-in-out;
-}
-
-.max-h-0 {
-  max-height: 0;
-  opacity: 0; 
-  overflow: hidden; 
-}
-
-
-.max-h-96 {
-  max-height: 24rem; 
-  opacity: 1; 
-  overflow: hidden; 
-}
-
-
-.overflow-hidden {
-  overflow: hidden;
-}
-
-
-.max-h-auto {
-  max-height: 1000rem; 
-}
+    transition: all 0.5s ease-in-out;
+  }
+  
+  .max-h-0 {
+    max-height: 0;
+  }
+  
+  .max-h-96 {
+    max-height: 24rem; /* Adjust this value based on your content size */
+  }
+  
+  .opacity-0 {
+    opacity: 0;
+  }
+  
+  .opacity-100 {
+    opacity: 1;
+  }
+  
+  .overflow-hidden {
+    overflow: hidden;
+  }
