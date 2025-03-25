@@ -5,10 +5,10 @@ from django.views.decorators.csrf import csrf_exempt
 import json
 from django.contrib.auth import login
 
-
 from django.contrib.auth.models import User  # Import User model
 
 from django.contrib.auth import logout
+from signup.views import send_email_code
 
 @csrf_exempt
 def logout_view(request):
@@ -39,6 +39,11 @@ def login_view(request):
             try:
                 user = User.objects.get(email=email)
                 username = user.username
+
+                if not user.is_active:
+                        print("Account is not active")
+                        return JsonResponse({"error": "Please Activate your account"}, status=400)
+                    
             except User.DoesNotExist:
                 return JsonResponse({"error": "Invalid credentials"}, status=400)
 
@@ -46,6 +51,7 @@ def login_view(request):
             user = authenticate(username=username, password=password)
 
             if user is not None:
+                
                 login(request, user)
                 return JsonResponse({"message": "Login successful", "username": user.username}, status=200)
             else:
@@ -56,7 +62,7 @@ def login_view(request):
 
     return JsonResponse({"error": "Invalid request method"}, status=405)
 
-
+#handles signup
 def signup(request):
     if request.method != "POST":
         return JsonResponse({"error": "Invalid request method"}, status=405)
@@ -66,6 +72,7 @@ def signup(request):
         username = data.get("username")
         email = data.get("email")
         password = data.get("password")
+
 
         if not username or not email or not password:
             return JsonResponse({"error": "All fields are required"}, status=400)
@@ -77,9 +84,15 @@ def signup(request):
             return JsonResponse({"error": "User with this email already exists"}, status=400)
 
         user = User.objects.create_user(username=username, email=email, password=password)
-        login(request, user)
+        user.is_active = False
+        user.save() 
+        
+        #login(request, user) need to remove this line
+        send_email_code(request)
+        
 
-        return JsonResponse({"message": "User created successfully"}, status=201)
+        # return JsonResponse({"message": "User created successfully"}, status=201)
+        return JsonResponse({"message": "Please Verify your email"}, status=201)
 
     except json.JSONDecodeError:
         return JsonResponse({"error": "Invalid JSON"}, status=400)
