@@ -1,9 +1,16 @@
 import { useState } from "react";
-import { Menu, Home, Settings, User, LogOut, ArrowLeft } from "lucide-react";
+import { Menu, Home, Settings, User, LogOut, ArrowLeft, ChevronLeft } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const TableSidebar = () => {
   const [isOpen, setIsOpen] = useState(true);
   const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
+  const navigate = useNavigate();
+
+  // Function to handle going back
+  const handleGoBack = () => {
+    navigate(-1); // This will take the user to the previous page in history
+  };
 
   return (
     <div className="fixed z-50 left-0">
@@ -17,11 +24,22 @@ const TableSidebar = () => {
         <button
           className={`${
             isOpen ? "text-gray-900" : "text-white"
-          }  mb-5 focus:outline-none`}
+          } mb-5 focus:outline-none`}
           onClick={() => setIsOpen(!isOpen)}
         >
           {isOpen ? <ArrowLeft className="w-9 h-9" /> : <Menu className="w-9 h-9" />}
         </button>
+
+        {/* Go Back Button */}
+        {isOpen && (
+          <button
+            onClick={handleGoBack}
+            className="flex items-center space-x-2 p-2 rounded-lg cursor-pointer hover:bg-gray-200 transition-colors duration-200 mb-4"
+          >
+            <ChevronLeft className="w-5 h-5" />
+            <span>Go Back</span>
+          </button>
+        )}
 
         {/* Sidebar Items */}
         <nav className="flex flex-col space-y-4">
@@ -36,11 +54,10 @@ const TableSidebar = () => {
             icon={<LogOut />}
             label="Logout"
             isOpen={isOpen}
-            onClick={() => setIsLogoutConfirmOpen(true)} // Open confirmation
+            onClick={() => setIsLogoutConfirmOpen(true)}
           />
         </div>
       </div>
-
     </div>
   );
 };
@@ -49,15 +66,13 @@ const TableSidebar = () => {
 const SidebarItem = ({ icon, label, isOpen, href, onClick }) => {
   return (
     <div
-      className="flex items-center space-x-4 p-2 rounded-lg cursor-pointer hover:bg-gray-700 transition-colors duration-200"
+      className="flex items-center space-x-4 p-2 rounded-lg cursor-pointer hover:bg-gray-200 transition-colors duration-200"
       onClick={onClick}
     >
-
-      {isOpen ? (
-        <a href={href} className="text-lg p-2 rounded-lg">
-          insert table items here
-        </a>
-      ) : null}
+      <div className="w-6 h-6">{icon}</div>
+      {isOpen && (
+        <span className="text-lg">{label}</span>
+      )}
     </div>
   );
 };
