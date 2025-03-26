@@ -5,7 +5,6 @@ from django.middleware.csrf import get_token
 from user_management.views import user_info
 from csv_upload.views import upload_csv
 from .views import logout_view
-from signup.views import send_email_code, verify_signup_code
 
 
 urlpatterns = [
@@ -15,10 +14,5 @@ urlpatterns = [
     path("api/signup/", signup, name="signup"),  # Add CSRF token endpoint
     path('api/user-info/', user_info, name='user_info'), #This user info endpoint
     path('upload-csv/', upload_csv, name='upload_csv'), #This is the upload_csv endpoint
-
-    # Add email verification endpoints
-    path("api/email-send-code/", send_email_code, name="send_verification_code"),
-    path ("signup_verify/", verify_signup_code, name = "verify_signup_code"),
-
 ]
 
