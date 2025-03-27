@@ -1,15 +1,28 @@
 import { useState } from "react";
 import { Menu, Home, Settings, User, LogOut, ArrowLeft, ChevronLeft } from "lucide-react";
+<<<<<<< Updated upstream
 import { useNavigate } from "react-router-dom";
+=======
+import { useNavigate } from "react-router-dom"; // If you're using React Router
+>>>>>>> Stashed changes
 
 const TableSidebar = () => {
   const [isOpen, setIsOpen] = useState(true);
   const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
+<<<<<<< Updated upstream
   const navigate = useNavigate();
 
   // Function to handle going back
   const handleGoBack = () => {
     navigate(-1); // This will take the user to the previous page in history
+=======
+  const navigate = useNavigate(); // React Router hook for navigation
+
+  // Go back function
+  const handleGoBack = () => {
+    navigate(-1); // Goes back one page in history
+    // Alternatively, you could use window.history.back() if not using React Router
+>>>>>>> Stashed changes
   };
 
   return (
@@ -34,7 +47,11 @@ const TableSidebar = () => {
         {isOpen && (
           <button
             onClick={handleGoBack}
+<<<<<<< Updated upstream
             className="flex items-center space-x-2 p-2 rounded-lg cursor-pointer hover:bg-gray-200 transition-colors duration-200 mb-4"
+=======
+            className="flex items-center space-x-2 p-2 mb-4 rounded-lg hover:bg-gray-200 transition-colors duration-200"
+>>>>>>> Stashed changes
           >
             <ChevronLeft className="w-5 h-5" />
             <span>Go Back</span>
@@ -44,8 +61,7 @@ const TableSidebar = () => {
         {/* Sidebar Items */}
         <nav className="flex flex-col space-y-4">
           <SidebarItem icon={<Home />} label="Home" isOpen={isOpen} />
-          <SidebarItem icon={<User />} label="Profile" isOpen={isOpen} />
-          <SidebarItem icon={<Settings />} label="Settings" isOpen={isOpen} />
+          <SidebarItem icon={<Settings />} label="Insert Table" isOpen={isOpen} />
         </nav>
 
         {/* Logout Button */}
@@ -69,10 +85,15 @@ const SidebarItem = ({ icon, label, isOpen, href, onClick }) => {
       className="flex items-center space-x-4 p-2 rounded-lg cursor-pointer hover:bg-gray-200 transition-colors duration-200"
       onClick={onClick}
     >
+<<<<<<< Updated upstream
       <div className="w-6 h-6">{icon}</div>
       {isOpen && (
         <span className="text-lg">{label}</span>
       )}
+=======
+      <span>{icon}</span>
+      {isOpen && <span>{label}</span>}
+>>>>>>> Stashed changes
     </div>
   );
 };

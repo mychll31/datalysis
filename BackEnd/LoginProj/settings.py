@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 
 from pathlib import Path
 
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -38,9 +39,22 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
+    # Authentication
+    'django.contrib.sites',
+
+    'rest_framework',
+    'rest_framework.authtoken',
+    'dj_rest_auth',
+    'allauth',
+    'allauth.account',  
+    'allauth.socialaccount',
+
     #Created via startup
     'base',
     'user_management',
+    'password_reset',
+    'signup',
+    'csv_upload',
 
     #Web module
     'corsheaders',
@@ -57,7 +71,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 
-    'corsheaders.middleware.CorsMiddleware',
+    'allauth.account.middleware.AccountMiddleware',
 ]
 
 ROOT_URLCONF = 'LoginProj.urls'
@@ -155,3 +169,23 @@ CORS_ALLOW_CREDENTIALS = True
 CSRF_COOKIE_HTTPONLY = False  # ✅ Allows frontend JavaScript to access it
 CSRF_COOKIE_SECURE = False    # ✅ Disable in development (HTTPS required in production)
 
+import os
+from dotenv import load_dotenv
+load_dotenv(encoding='utf-8') 
+
+# Email Configuration (for testing)
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = os.getenv('EMAIL_HOST')
+EMAIL_PORT = os.getenv('EMAIL_PORT')
+EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS') == 'True'
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD =  os.getenv('EMAIL_HOST_PASSWORD')
+DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL')
+
+
+SITE_ID = 1  # Required for allauth
+ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_LOGIN_METHODS = {'email'}
+ACCOUNT_EMAIL_VERIFICATION = 'mandatory' # Require email verification 
+ACCOUNT_EMAIL_CONFIRMATION_EXPIRE_DAYS = 1
+PASSWORD_RESET_TIMEOUT = 86400 # 1 day 

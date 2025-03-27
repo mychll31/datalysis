@@ -53,7 +53,7 @@ const Display = () => {
                     {/* Second Row of Dropdowns & Apply Button */}
                     <div className="grid grid-cols-2 gap-4">
                         <select className="w-full p-3 bg-gray-800 text-white rounded border border-gray-500 focus:outline-none focus:border-yellow-400">
-                            <option>Select a Column</option>
+                            <option>Select a Data</option>
                         </select>
 
                         <div className="flex gap-4">

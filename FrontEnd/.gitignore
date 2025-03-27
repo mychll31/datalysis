@@ -29,3 +29,7 @@ __pycache__/
 #database files
 *.sqlite3
 *.db
+
+#env files
+.env
+*.env.local
