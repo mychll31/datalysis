@@ -38,8 +38,6 @@ const SignUpModal = ({ isOpen, setIsOpen, setIsLoginOpen }) => {
         }
     };
     
-    
-
     // Call this function when the modal opens or when the component mounts
     useEffect(() => {
         if (isOpen) {
