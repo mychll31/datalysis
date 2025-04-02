@@ -79,7 +79,7 @@ const UploadPage = () => {
               const totalCols = Object.keys(result.data[0]).length;
 
               setColumns(Object.keys(result.data[0]));
-              setCsvData(result.data.slice(0, 5));
+              setCsvData(result.data.slice(0, totalRows));
               setRowsCount(totalRows);
               setTotalDataPoints(totalCols * totalRows);
               setShowModal(true);
@@ -98,7 +98,7 @@ const UploadPage = () => {
               const totalCols = Object.keys(jsonData[0]).length;
 
               setColumns(Object.keys(jsonData[0]));
-              setCsvData(jsonData.slice(0, 5));
+              setCsvData(jsonData.slice(0, totalRows));
               setRowsCount(totalRows);
               setTotalDataPoints(totalCols * totalRows);
               setShowModal(true);
@@ -131,7 +131,7 @@ const UploadPage = () => {
       const totalCols = Object.keys(jsonData[0]).length;
 
       setColumns(Object.keys(jsonData[0]));
-      setCsvData(jsonData.slice(0, 5));
+      setCsvData(jsonData.slice(0, totalRows));
       setRowsCount(totalRows);
       setTotalDataPoints(totalCols * totalRows);
       setShowModal(true);

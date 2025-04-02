@@ -14,7 +14,7 @@ export const BarGraph = () => {
             },
             title: {
                 display: true,
-                text: "Monthly Waste Collection (kg)",
+                text: BarChartData.datasets[0].label || "Chart Data",
                 font: {
                     size: 18,
                 },

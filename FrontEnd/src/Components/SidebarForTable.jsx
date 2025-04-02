@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { Menu, Home, Settings, User, LogOut, Loader } from "lucide-react";
+import { Menu, Home, Settings, User, LogOut, Loader, ArrowLeft, ChevronLeft  } from "lucide-react";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { useNavigate } from "react-router-dom";
 
 const TableSidebar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -43,6 +44,11 @@ const TableSidebar = () => {
       setIsLoggingOut(false);
       setIsLogoutConfirmOpen(false);
     }
+  const navigate = useNavigate();
+
+  // Function to handle going back
+  const handleGoBack = () => {
+    navigate(-1); // This will take the user to the previous page in history
   };
 
   return (
@@ -54,12 +60,26 @@ const TableSidebar = () => {
         }`}
       >
         <button
-          className="text-gray-900 mb-5 focus:outline-none"
+          className={`${
+            isOpen ? "text-gray-900" : "text-white"
+          } mb-5 focus:outline-none`}
           onClick={() => setIsOpen(!isOpen)}
         >
           <Menu className="w-9 h-9" />
         </button>
 
+        {/* Go Back Button */}
+        {isOpen && (
+          <button
+            onClick={handleGoBack}
+            className="flex items-center space-x-2 p-2 rounded-lg cursor-pointer hover:bg-gray-200 transition-colors duration-200 mb-4"
+          >
+            <ChevronLeft className="w-5 h-5" />
+            <span>Go Back</span>
+          </button>
+        )}
+
+        {/* Sidebar Items */}
         <nav className="flex flex-col space-y-4">
           <SidebarItem icon={<Home />} label="Home" isOpen={isOpen} href="/homepage" />
           <SidebarItem icon={<User />} label="Profile" isOpen={isOpen} />
@@ -116,13 +136,16 @@ const TableSidebar = () => {
 const SidebarItem = ({ icon, label, isOpen, href, onClick }) => {
   return (
     <div
-      className="flex items-center space-x-4 p-2 rounded-lg cursor-pointer hover:bg-gray-700 transition-colors duration-200"
+      className="flex items-center space-x-4 p-2 rounded-lg cursor-pointer hover:bg-gray-200 transition-colors duration-200"
       onClick={onClick}
     >
-      {icon}
-      {isOpen ? <a href={href} className="text-lg p-2 rounded-lg">{label}</a> : null}
+      <div className="w-6 h-6">{icon}</div>
+      {isOpen && (
+        <span className="text-lg">{label}</span>
+      )}
     </div>
   );
+};
 };
 
 export default TableSidebar;
