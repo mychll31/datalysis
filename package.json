@@ -3,6 +3,8 @@
     "axios": "^1.8.4",
     "datatables.net-dt": "^2.2.2",
     "datatables.net-react": "^1.0.0",
+    "file-saver": "^2.0.5",
+    "html-to-image": "^1.11.13",
     "papaparse": "^5.5.2",
     "react": "^19.0.0",
     "react-toastify": "^11.0.5",
