@@ -5,13 +5,13 @@ import {
   getFilteredRowModel,
   getSortedRowModel,
   flexRender,
+  getPaginationRowModel,
 } from '@tanstack/react-table';
 
 const CsvTable = ({ columns: csvColumns, csvData }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedColumn, setSelectedColumn] = useState(csvColumns[0]);
   const [filterValue, setFilterValue] = useState('');
-  const [showAll, setShowAll] = useState(false);
   const [columnFilters, setColumnFilters] = useState([]);
 
   // Prepare columns for react-table
@@ -27,54 +27,25 @@ const CsvTable = ({ columns: csvColumns, csvData }) => {
     }))
   ), [csvColumns, csvData]);
 
-  // Global filter function
-  const globalFilterFn = (row, columnId, filterValue) => {
-    return String(row.getValue(columnId)).toLowerCase().includes(filterValue.toLowerCase());
-  };
-
-  // Column filter functions
-  const columnFilterFn = (row, columnId, filterValue) => {
-    const value = row.getValue(columnId);
-    const columnMeta = columns.find(c => c.accessorKey === columnId)?.meta;
-    
-    if (filterValue.includes('-') && (columnMeta?.isNumeric || columnMeta?.isDate)) {
-      const [min, max] = filterValue.split('-').map(v => v.trim());
-      
-      if (columnMeta.isNumeric) {
-        const numValue = parseFloat(value);
-        const minNum = parseFloat(min);
-        const maxNum = parseFloat(max);
-        return !isNaN(numValue) && numValue >= minNum && numValue <= maxNum;
-      }
-      
-      if (columnMeta.isDate) {
-        const dateValue = new Date(value);
-        const minDate = new Date(min);
-        const maxDate = new Date(max);
-        return !isNaN(dateValue) && dateValue >= minDate && dateValue <= maxDate;
-      }
-    }
-    
-    return String(value).toLowerCase().includes(filterValue.toLowerCase());
-  };
-
-  // Create the table instance
+  // Create the table instance with pagination
   const table = useReactTable({
     data: csvData,
     columns,
     state: {
       columnFilters,
-      globalFilter: searchTerm
+      globalFilter: searchTerm,
     },
     onColumnFiltersChange: setColumnFilters,
     onGlobalFilterChange: setSearchTerm,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getSortedRowModel: getSortedRowModel(),
-    globalFilterFn,
-    filterFns: {
-      columnFilter: columnFilterFn
-    }
+    getPaginationRowModel: getPaginationRowModel(),
+    initialState: {
+      pagination: {
+        pageSize: 20, // Default page size
+      },
+    },
   });
 
   const addFilter = () => {
@@ -96,96 +67,159 @@ const CsvTable = ({ columns: csvColumns, csvData }) => {
     setSearchTerm('');
   };
 
-  const getFilterPlaceholder = () => {
-    const column = columns.find(c => c.accessorKey === selectedColumn);
-    if (column?.meta?.isNumeric) return "e.g., 10-100";
-    if (column?.meta?.isDate) return "e.g., 2023-01-01 - 2023-12-31";
-    return "Filter value";
-  };
+  // Enhanced pagination controls
+const getPageNumbers = () => {
+  const currentPage = table.getState().pagination.pageIndex;
+  const pageCount = table.getPageCount();
+  const pages = [];
+  const maxVisiblePages = 5; // Number of page buttons to show
+
+  if (pageCount <= maxVisiblePages) {
+    // Show all pages if there aren't too many
+    for (let i = 0; i < pageCount; i++) {
+      pages.push(i);
+    }
+  } else {
+    // Skip showing page 1 (index 0) when we're on page 4 or later
+    const shouldShowFirstPage = currentPage < 3;
+
+    if (shouldShowFirstPage) {
+      pages.push(0); // Show first page only when needed
+    }
+
+    // Calculate range around current page
+    let start = Math.max(shouldShowFirstPage ? 1 : 0, currentPage - 1);
+    let end = Math.min(pageCount - (shouldShowFirstPage ? 2 : 1), currentPage + 1);
+
+    // Adjust if we're at the start or end
+    if (currentPage <= 2) {
+      end = shouldShowFirstPage ? 3 : 2;
+    } else if (currentPage >= pageCount - 3) {
+      start = pageCount - 4;
+    }
+
+    // Add ellipsis if needed before current range
+    if (start > (shouldShowFirstPage ? 1 : 0)) {
+      pages.push('...');
+    }
+
+    // Add pages in current range
+    for (let i = start; i <= end; i++) {
+      pages.push(i);
+    }
+
+    // Add ellipsis if needed after current range
+    if (end < pageCount - (shouldShowFirstPage ? 2 : 1)) {
+      pages.push('...');
+    }
+
+    // Always show last page unless it's already included
+    if (end < pageCount - 1) {
+      pages.push(pageCount - 1);
+    }
+  }
+
+  return pages;
+};
+
+// In your JSX where you render the pagination buttons:
+{getPageNumbers().map((page, index) => (
+  page === 'left-ellipsis' || page === 'right-ellipsis' ? (
+    <span
+      key={index}
+      className="px-2 py-1 text-xs text-gray-400 cursor-default"
+    >
+      ...
+    </span>
+  ) : (
+    <button
+      key={index}
+      className={`px-2 py-1 text-xs rounded ${
+        page === table.getState().pagination.pageIndex
+          ? 'bg-blue-600 text-white'
+          : 'bg-gray-700 text-white hover:bg-gray-600'
+      } border border-gray-600`}
+      onClick={() => table.setPageIndex(page)}
+    >
+      {page + 1}
+    </button>
+  )
+))}
 
   return (
-    <div className="mt-8 w-full bg-gray-800 p-4 rounded-lg shadow-lg">
-      <h2 className="text-xl font-semibold text-white mb-4">CSV Data Table</h2>
-      
-      {/* Controls */}
-      <div className="flex flex-wrap gap-4 mb-4">
-        {/* Search Bar */}
-        <div className="flex-1 min-w-[200px]">
-          <input
-            type="text"
-            placeholder="Search all columns..."
-            className="w-full p-2 rounded bg-gray-700 text-white border border-gray-600"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
-        
-        {/* Show All Toggle */}
-        <button
-          className={`px-4 py-2 rounded ${showAll ? 'bg-gray-600' : 'bg-blue-600 hover:bg-blue-700'} text-white`}
-          onClick={() => setShowAll(!showAll)}
-        >
-          {showAll ? "Restrict Height" : "Show All Rows"}
-        </button>
-      </div>
-      
-      {/* Filter Controls */}
-      <div className="mb-4 flex flex-wrap gap-2 items-center">
+    <div className="w-full bg-gray-800 p-2 rounded-lg shadow-lg">
+      {/* Compact Controls */}
+      <div className="flex flex-wrap items-center gap-2 mb-2">
+        <input
+          type="text"
+          placeholder="Search all columns..."
+          className="flex-1 min-w-[150px] p-1 text-sm rounded bg-gray-700 text-white border border-gray-600"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+
         <select
-          className="p-2 rounded bg-gray-700 text-white border border-gray-600"
+          className="p-1 text-sm rounded bg-gray-700 text-white border border-gray-600"
           value={selectedColumn}
           onChange={(e) => setSelectedColumn(e.target.value)}
         >
           {csvColumns.map((col, index) => (
-            <option key={index} value={col}>
-              {col} {columns.find(c => c.accessorKey === col)?.meta?.isNumeric ? "(num)" : 
-                    columns.find(c => c.accessorKey === col)?.meta?.isDate ? "(date)" : ""}
-            </option>
+            <option key={index} value={col}>{col}</option>
           ))}
         </select>
+
         <input
           type="text"
-          placeholder={getFilterPlaceholder()}
-          className="p-2 rounded bg-gray-700 text-white border border-gray-600"
+          placeholder="Filter value"
+          className="p-1 text-sm rounded bg-gray-700 text-white border border-gray-600"
           value={filterValue}
           onChange={(e) => setFilterValue(e.target.value)}
         />
+
         <button
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
+          className="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 text-sm rounded"
           onClick={addFilter}
         >
-          Add Filter
+          + Filter
         </button>
-        
-        {/* Active filters */}
+
         {columnFilters.length > 0 && (
-          <div className="ml-2 text-sm text-gray-300">
-            Active filters:
-            {columnFilters.map(({ id, value }) => (
-              <span key={id} className="ml-2 bg-gray-700 px-2 py-1 rounded inline-flex items-center">
-                {id}: {value}
-                <button 
-                  onClick={() => removeFilter(id)}
-                  className="ml-1 text-red-400 hover:text-red-300"
-                >
-                  ×
-                </button>
-              </span>
-            ))}
-          </div>
+          <button
+            className="text-red-400 hover:text-red-300 text-sm"
+            onClick={clearAllFilters}
+          >
+            Clear all
+          </button>
         )}
       </div>
-      
-      {/* Table */}
-      <div className={`overflow-auto border border-gray-700 rounded-lg`} style={{ maxHeight: showAll ? 'none' : '70vh' }}>
-        <table className="table-auto min-w-full text-white border-collapse">
+
+      {/* Active filters */}
+      {columnFilters.length > 0 && (
+        <div className="flex flex-wrap gap-1 mb-2">
+          {columnFilters.map(({ id, value }) => (
+            <span key={id} className="text-xs bg-gray-700 text-white px-2 py-0.5 rounded inline-flex items-center">
+              {id}: {value}
+              <button
+                onClick={() => removeFilter(id)}
+                className="ml-1 text-red-400 hover:text-red-300"
+              >
+                ×
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
+
+      {/* Compact Table */}
+      <div className="overflow-auto border border-gray-700 rounded-lg" style={{ maxHeight: '65vh' }}>
+        <table className="min-w-full text-white border-collapse">
           <thead className="bg-gray-700 sticky top-0">
             {table.getHeaderGroups().map(headerGroup => (
               <tr key={headerGroup.id}>
                 {headerGroup.headers.map(header => (
-                  <th 
-                    key={header.id} 
-                    className="border border-gray-600 px-4 py-2 text-left cursor-pointer hover:bg-gray-600 whitespace-nowrap"
+                  <th
+                    key={header.id}
+                    className="border border-gray-600 px-2 py-1 text-left text-sm cursor-pointer hover:bg-gray-600 whitespace-nowrap"
                     onClick={header.column.getToggleSortingHandler()}
                   >
                     <div className="flex items-center justify-between">
@@ -203,12 +237,12 @@ const CsvTable = ({ columns: csvColumns, csvData }) => {
               </tr>
             ))}
           </thead>
-          <tbody>
+          <tbody className="text-xs">
             {table.getRowModel().rows.length > 0 ? (
               table.getRowModel().rows.map(row => (
                 <tr key={row.id} className="even:bg-gray-600 odd:bg-gray-700 hover:bg-gray-500">
                   {row.getVisibleCells().map(cell => (
-                    <td key={cell.id} className="border border-gray-600 px-4 py-2 whitespace-nowrap">
+                    <td key={cell.id} className="border border-gray-600 px-2 py-1 whitespace-nowrap">
                       {flexRender(
                         cell.column.columnDef.cell,
                         cell.getContext()
@@ -219,26 +253,97 @@ const CsvTable = ({ columns: csvColumns, csvData }) => {
               ))
             ) : (
               <tr>
-                <td colSpan={columns.length} className="text-center py-4 text-gray-400">
-                  No data found matching your criteria
+                <td colSpan={columns.length} className="text-center py-2 text-gray-400 text-xs">
+                  No matching data found
                 </td>
               </tr>
             )}
           </tbody>
         </table>
       </div>
-      
-      {/* Data summary */}
-      <div className="mt-2 text-sm text-gray-400">
-        Showing {table.getRowModel().rows.length} of {csvData.length} rows
-        {columnFilters.length > 0 && (
-          <button 
-            onClick={clearAllFilters}
-            className="ml-4 text-blue-400 hover:text-blue-300"
+
+      {/* Enhanced Pagination Controls */}
+      <div className="flex items-center justify-between mt-2 px-1">
+        <div className="text-xs text-gray-400">
+          Showing{' '}
+          <span className="font-medium text-white">
+            {table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1}
+          </span>{' '}
+          to{' '}
+          <span className="font-medium text-white">
+            {Math.min(
+              (table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize,
+              table.getFilteredRowModel().rows.length
+            )}
+          </span>{' '}
+          of{' '}
+          <span className="font-medium text-white">
+            {table.getFilteredRowModel().rows.length}
+          </span>{' '}
+          rows
+        </div>
+
+        <div className="flex items-center gap-1">
+          <button
+            className="px-2 py-1 text-xs rounded bg-gray-700 text-white border border-gray-600 disabled:opacity-50"
+            onClick={() => table.setPageIndex(0)}
+            disabled={!table.getCanPreviousPage()}
           >
-            Clear all filters
+            «
           </button>
-        )}
+          <button
+            className="px-2 py-1 text-xs rounded bg-gray-700 text-white border border-gray-600 disabled:opacity-50"
+            onClick={() => table.previousPage()}
+            disabled={!table.getCanPreviousPage()}
+          >
+            ‹
+          </button>
+
+          {/* Page number buttons */}
+          {getPageNumbers().map((page, index) => (
+            <button
+              key={index}
+              className={`px-2 py-1 text-xs rounded ${
+                page === table.getState().pagination.pageIndex
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-700 text-white hover:bg-gray-600'
+              } border border-gray-600`}
+              onClick={() => typeof page === 'number' ? table.setPageIndex(page) : null}
+              disabled={page === '...'}
+            >
+              {page === '...' ? '...' : page + 1}
+            </button>
+          ))}
+
+          <button
+            className="px-2 py-1 text-xs rounded bg-gray-700 text-white border border-gray-600 disabled:opacity-50"
+            onClick={() => table.nextPage()}
+            disabled={!table.getCanNextPage()}
+          >
+            ›
+          </button>
+          <button
+            className="px-2 py-1 text-xs rounded bg-gray-700 text-white border border-gray-600 disabled:opacity-50"
+            onClick={() => table.setPageIndex(table.getPageCount() - 1)}
+            disabled={!table.getCanNextPage()}
+          >
+            »
+          </button>
+        </div>
+
+        <select
+          className="p-1 text-xs rounded bg-gray-700 text-white border border-gray-600"
+          value={table.getState().pagination.pageSize}
+          onChange={e => {
+            table.setPageSize(Number(e.target.value))
+          }}
+        >
+          {[10, 20, 50, 100].map(pageSize => (
+            <option key={pageSize} value={pageSize}>
+              Show {pageSize}
+            </option>
+          ))}
+        </select>
       </div>
     </div>
   );

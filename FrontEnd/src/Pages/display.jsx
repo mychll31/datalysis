@@ -9,18 +9,21 @@ import { BarGraph } from "../Components/Bar";
 import StatisticsSummary from "../Components/StatisticSum";
 import { RelationshipChart } from "../Components/RelationshipChart";
 import { RelationshipData } from "../Components/FAKE_DATA";
+import { InsightComponent } from "../Components/Insights";
 
 const Display = () => {
     const location = useLocation();
     const { csvData = [], columns = [], file } = location.state || {};
-    const [targetColumn, setTargetColumn] = useState("");
+    const [targetColumn1, setTargetColumn1] = useState("");
+    const [targetColumn2, setTargetColumn2] = useState("");
     const [isProcessing, setIsProcessing] = useState(false);
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(null);
+    const [analysisResult, setAnalysisResult] = useState(null);
 
     const handleApply = async () => {
-        if (!targetColumn) {
-            setError("Please select a target column");
+        if (!targetColumn1 || !targetColumn2) {
+            setError("Please select both target columns");
             return;
         }
         
@@ -30,7 +33,8 @@ const Display = () => {
     
         try {
             const formData = new FormData();
-            formData.append('target_column', targetColumn);
+            formData.append('target_column1', targetColumn1);
+            formData.append('target_column2', targetColumn2);
     
             // Use the original file if available
             if (file) {
@@ -46,10 +50,10 @@ const Display = () => {
                 formData.append('file', blob, 'data.csv');
             }
     
-            const response = await fetch('http://localhost:8000/upload_csv/', {
+            const response = await fetch('http://localhost:8000/upload-csv/', { // Changed endpoint
                 method: 'POST',
                 body: formData,
-                credentials: 'include' // Important for session/csrf
+                credentials: 'include'
             });
     
             // First check if response is JSON
@@ -65,12 +69,13 @@ const Display = () => {
                 throw new Error(result.error || `Server error: ${response.status}`);
             }
             
-            setSuccess("File processed successfully!");
-            console.log("Results:", result);
+            setSuccess("Analysis completed successfully!");
+            setAnalysisResult(result); // Store the analysis result
+            console.log("Analysis Results:", result);
     
         } catch (error) {
             console.error("Full error:", error);
-            setError(error.message || "Processing failed. Check console for details.");
+            setError(error.message || "Analysis failed. Check console for details.");
         } finally {
             setIsProcessing(false);
         }
@@ -101,17 +106,25 @@ const Display = () => {
                     <div className="grid grid-cols-2 gap-4">
                         <select 
                             className="w-full p-3 bg-gray-800 text-white rounded border border-gray-500 focus:outline-none focus:border-yellow-400"
-                            value={targetColumn}
-                            onChange={(e) => setTargetColumn(e.target.value)}
+                            value={targetColumn1}
+                            onChange={(e) => setTargetColumn1(e.target.value)}
                             required
                         >
-                            <option value="">Select Target Column</option>
+                            <option value="">Select First Target Column</option>
                             {columns.map((col, index) => (
                                 <option key={index} value={col}>{col}</option>
                             ))}
                         </select>
-                        <select className="w-full p-3 bg-gray-800 text-white rounded border border-gray-500 focus:outline-none focus:border-yellow-400">
-                            <option>Set Range</option>
+                        <select 
+                            className="w-full p-3 bg-gray-800 text-white rounded border border-gray-500 focus:outline-none focus:border-yellow-400"
+                            value={targetColumn2}
+                            onChange={(e) => setTargetColumn2(e.target.value)}
+                            required
+                        >
+                            <option value="">Select Second Target Column</option>
+                            {columns.map((col, index) => (
+                                <option key={index} value={col}>{col}</option>
+                            ))}
                         </select>
                     </div>
 
@@ -140,7 +153,7 @@ const Display = () => {
                         onClick={handleApply}
                         disabled={isProcessing}
                     >
-                        {isProcessing ? "PROCESSING..." : "APPLY"}
+                        {isProcessing ? "PROCESSING..." : "ANALYZE"}
                     </button>
                     {error && (
                         <div className="mx-10 text-red-500 text-sm mb-2">
@@ -163,30 +176,32 @@ const Display = () => {
                 )}
             </div>
 
+            {/* Visualizations - Updated to use analysisResult if available */}
             <div className="w-full pb-10 flex justify-center">
                 <div className="w-2/5">
                     <div className="App bg-white border-gray-900 border-8 shadow-xl"> 
-                        <LineGraph /> 
+                        <LineGraph data={analysisResult?.plot_data} /> 
                     </div>
                 </div>
                 <div className="w-1/4 ml-10">
                     <div className="App bg-white border-gray-900 border-8 shadow-xl"> 
-                        <PieChart /> 
+                        <PieChart data={analysisResult?.plot_data} /> 
                     </div>
                 </div>
             </div>
             <div className="w-1/2 pb-10">
                 <div className="App bg-white border-gray-900 border-8 shadow-xl"> 
-                    <BarGraph /> 
+                    <BarGraph data={analysisResult?.plot_data} /> 
                 </div>
             </div>
             <div className="w-1/2 pb-10">
                 <div className="App bg-white border-gray-900 border-8 shadow-xl"> 
-                    <RelationshipChart data={RelationshipData}/> 
+                    <RelationshipChart data={analysisResult || RelationshipData}/> 
                 </div>
             </div>
             <h2 className="w-1/2 text-center text-lg text-gray-400 font-light">Statistics Summary</h2>
-            <StatisticsSummary />
+            <StatisticsSummary stats={analysisResult?.column_stats} />
+            <InsightComponent data={analysisResult || RelationshipData}/>
         </section>
     );
 };
