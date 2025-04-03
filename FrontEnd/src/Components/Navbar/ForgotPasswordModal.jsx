@@ -1,11 +1,14 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const ForgotPasswordModal = ({ isOpen, setIsOpen }) => {
     const [step, setStep] = useState(1);
     const [code, setCode] = useState('');
     const [email, setEmail] = useState('');
     const [newPassword, setNewPassword] = useState('');
-    const [confirmNewPassword, setConfirmNewPassword] = useState("");
+    const [confirmNewPassword, setConfirmNewPassword] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
+    const [timer, setTimer] = useState(60); // Timer for 1 minute
+    const [timerActive, setTimerActive] = useState(false);
 
     // Step 1: Handle email submission
     const handleForgotPassword = async () => {
@@ -25,9 +28,12 @@ const ForgotPasswordModal = ({ isOpen, setIsOpen }) => {
                 throw new Error(`Server Error: ${response.status}`);
             }
 
-            const data = await response.json(); 
+            const data = await response.json();
             console.log("API Response:", data);
 
+            // Start the timer after sending the code
+            setTimer(60);
+            setTimerActive(true);
         } catch (error) {
             console.error("Error:", error);
             alert("Something went wrong.");
@@ -53,7 +59,6 @@ const ForgotPasswordModal = ({ isOpen, setIsOpen }) => {
             } else {
                 alert(data.error || 'An error occurred. Please try again.');
             }
-
         } catch (error) {
             alert('Something went wrong.');
         }
@@ -85,6 +90,46 @@ const ForgotPasswordModal = ({ isOpen, setIsOpen }) => {
         }
     };
 
+    // Resend the code when the user clicks "Didn't receive a code?"
+    const handleResendCode = async () => {
+        setIsLoading(true);
+        try {
+            const response = await fetch('http://localhost:8000/password-reset/send-code/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email })
+            });
+
+            if (!response.ok) {
+                const text = await response.text();
+                console.error("Response Text:", text);
+                throw new Error(`Server Error: ${response.status}`);
+            }
+
+            const data = await response.json();
+            alert('Code resent successfully!');
+            setTimer(60); // Reset the timer to 60 seconds
+            setTimerActive(true); // Restart the timer
+        } catch (error) {
+            console.error("Error:", error);
+            alert('Something went wrong while resending the code.');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    // Handle the timer countdown
+    useEffect(() => {
+        if (timerActive && timer > 0) {
+            const timerInterval = setInterval(() => {
+                setTimer((prevTimer) => prevTimer - 1);
+            }, 1000);
+
+            return () => clearInterval(timerInterval); // Clean up the interval on unmount
+        } else if (timer === 0) {
+            setTimerActive(false); // Stop the timer when it reaches 0
+        }
+    }, [timer, timerActive]);
 
     if (!isOpen) return null;
 
@@ -123,10 +168,10 @@ const ForgotPasswordModal = ({ isOpen, setIsOpen }) => {
                             </>
                         )}
 
-                        {/* Step 2: Enter Code */}
+                        {/* Step 2: Enter the Verification Code */}
                         {step === 2 && (
                             <>
-                                <p className="font-light text-gray-500">Enter the Code sent to <br></br> <span className="font-semibold text-gray-700">{email}</span> .</p>
+                                <p className="font-light text-gray-500">Enter the Code sent to <br /> <span className="font-semibold text-gray-700">{email}</span>.</p>
                                 <div className="py-8 space-y-6 text-gray-700">
                                     <div className="relative">
                                         <input
@@ -136,6 +181,7 @@ const ForgotPasswordModal = ({ isOpen, setIsOpen }) => {
                                             placeholder="Reset Code"
                                             value={code}
                                             onChange={(e) => setCode(e.target.value)}
+                                            disabled={timer === 0} // Disable input if the timer is 0
                                         />
                                         <label
                                             htmlFor="resetCode"
@@ -143,9 +189,32 @@ const ForgotPasswordModal = ({ isOpen, setIsOpen }) => {
                                             Code
                                         </label>
                                     </div>
-                                    <button className="bg-cyan-800 text-white rounded-md px-4 py-2 w-full" onClick={handleCodeVerification}>
+
+                                    {/* Display the timer */}
+                                    <div className="mt-2 text-center">
+                                        {timer > 0
+                                            ? <span className="text-red-500">{timer} seconds remaining</span>
+                                            : <span className="text-gray-600">Code expired</span>}
+                                    </div>
+
+                                    <div className="mt-3 text-center">
+                                        <button
+                                            className="text-cyan-800 underline"
+                                            onClick={handleResendCode}
+                                            disabled={isLoading || timer > 0}
+                                        >
+                                            {isLoading ? 'Resending...' : "Didn't receive a code?"}
+                                        </button>
+                                    </div>
+
+                                    <button
+                                        className="bg-cyan-800 text-white rounded-md px-4 py-2 w-full"
+                                        onClick={handleCodeVerification}
+                                        disabled={timer === 0} // Disable if timer is expired
+                                    >
                                         Verify Code
                                     </button>
+
                                     <button className="mt-3 text-gray-600 underline" onClick={() => setStep(step - 1)}>Back</button>
                                 </div>
                             </>
@@ -167,7 +236,6 @@ const ForgotPasswordModal = ({ isOpen, setIsOpen }) => {
                                             onChange={(e) => setNewPassword(e.target.value)}
                                         />
                                         <label
-
                                             htmlFor="newPassword"
                                             className="absolute left-0 -top-3.5 text-gray-600 text-sm peer-placeholder-shown:top-2 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 transition-all peer-focus:-top-3.5 peer-focus:text-sm peer-focus:text-gray-600">
                                             New Password
@@ -202,6 +270,7 @@ const ForgotPasswordModal = ({ isOpen, setIsOpen }) => {
                                 </div>
                             </>
                         )}
+
                         {/* Step 4: Confirmation */}
                         {step === 4 && (
                             <>
