@@ -29,7 +29,7 @@ const UploadModal = ({ show, onClose, file, columns, csvData, rowsCount, totalDa
                         </thead>
                         <tbody>
                             {Array.isArray(csvData) && csvData.length > 0 ? (
-                                csvData.map((row, rowIndex) => (
+                                csvData.slice(0,5).map((row, rowIndex) => (
                                     <tr key={rowIndex} className="even:bg-gray-100 odd:bg-gray-300 hover:bg-gray-200">
                                         {columns.map((col, colIndex) => (
                                             <td key={colIndex} className="border border-gray-400 px-4 py-2">

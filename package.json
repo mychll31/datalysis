@@ -1,6 +1,8 @@
 {
   "dependencies": {
     "@tanstack/react-table": "^8.21.2",
+    "chart.js": "^4.4.8",
+    "react-chartjs-2": "^5.3.0",
     "axios": "^1.8.4",
     "chart.js": "^4.4.8",
     "datatables.net-dt": "^2.2.2",

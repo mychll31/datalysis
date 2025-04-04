@@ -55,7 +55,6 @@ INSTALLED_APPS = [
     'password_reset',
     'signup',
     'csv_upload',
-
     #Web module
     'corsheaders',
 ]

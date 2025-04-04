@@ -9,6 +9,8 @@ from django.http import JsonResponse
 from django.contrib.auth.hashers import make_password
 from .models import PasswordResetCode
 from django.views.decorators.csrf import csrf_exempt
+from django.template.loader import render_to_string
+from django.utils.html import strip_tags
 import json
 
 @csrf_exempt
@@ -36,15 +38,20 @@ def send_reset_code(request):
         user=user, code=str(reset_code), expires_at=now() + timedelta(minutes=10)
     )
 
+    html_message = render_to_string('registration/email_passwordreset.html', {
+            'username': user.username,
+            'reset_code': reset_code
+        })
+    
     # Send email with the reset code
     send_mail(
-        "Your Password Reset Code",
-        f"Your password reset code is: {reset_code}",
+        "Password Reset Code",
+        strip_tags(html_message),
         settings.EMAIL_HOST_USER,
         [email],
+        html_message=html_message,
         fail_silently=False,
     )
-
     return JsonResponse({"message": "Reset code sent successfully!"})
     
 
@@ -90,12 +97,16 @@ def set_newpassword(request):
     # Set the new password securely
     user.set_password(new_password)
     user.save()
-
+    confirm_email = render_to_string('registration/email_notif.html', {
+            'username': user.username,
+            'email': email,
+        })
     send_mail(
-        "Reset Password",
-        f"Hi {email}! You have successfully reset your password. If you did not request this change, please contact us immediately.",
+        "Reset Password Complete",
+        strip_tags(confirm_email),
         settings.EMAIL_HOST_USER,
         [email],
+        html_message=confirm_email,
         fail_silently=False,
     )
 
