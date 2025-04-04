@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"; // Import useEffect
+import { useEffect, useState } from "react"; // Import useEffect
 
 const SignUpModal = ({ isOpen, setIsOpen, setIsLoginOpen }) => {
     // ✅ Declare state at the top level
@@ -249,22 +249,7 @@ const SignUpModal = ({ isOpen, setIsOpen, setIsLoginOpen }) => {
                                 </div>
                             </>
                         )}
-
-                    {/* Step 3 */}
-                    {step === 3 && (
-                        <>
-                            <h2 className="text-2xl font-semibold text-gray-800">Sign up Complete!</h2>
-                            <div className="py-8 space-y-6 text-gray-700">
-                                <p className="text-gray-600">You have successfully signed up. You can now log in to your account.</p>
-                                <button
-                                    className="bg-cyan-800 text-white rounded-md px-4 py-2 w-full hover:bg-cyan-700 transition-colors"
-                                    onClick={() => setIsOpen(false)}>
-                                    Log In
-                                </button>
-                            </div>
-                        </>
-                    )}
-
+                        
                     <button className="mt-3 text-gray-600 underline" onClick={() => setIsOpen(false)}>Close</button>
                 </div>
             </div>
