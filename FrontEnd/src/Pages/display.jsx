@@ -90,18 +90,8 @@ const Display = () => {
 
             <div className="m-10 w-48 h-12 bg-logo bg-no-repeat bg-cover bg-center"></div>
 
-            <div className="w-2/3 flex justify-between items-end p-6 text-white font-inter">
+            <div className="w-2/3 flex justify-between items-center p-6 text-white font-inter">
                 <div className="flex flex-col space-y-6 w-3/4">
-                    <div className="relative flex items-center">
-                        <input 
-                            type="text" 
-                            placeholder="Search" 
-                            className="w-full p-3 rounded-lg bg-gray-800 text-white border border-gray-500 focus:outline-none focus:border-yellow-400" 
-                        />
-                        <div className="absolute right-4 text-white cursor-pointer text-xl">
-                            &#9776;
-                        </div>
-                    </div>
 
                     <div className="grid grid-cols-2 gap-4">
                         <select 
@@ -115,6 +105,15 @@ const Display = () => {
                                 <option key={index} value={col}>{col}</option>
                             ))}
                         </select>
+                        <select className="w-full p-3 bg-gray-800 text-white rounded border border-gray-500 focus:outline-none focus:border-yellow-400">
+                            <option>Output (Chart)</option>
+                        </select>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        
+
+                        <div className="flex gap-4">
                         <select 
                             className="w-full p-3 bg-gray-800 text-white rounded border border-gray-500 focus:outline-none focus:border-yellow-400"
                             value={targetColumn2}
@@ -126,20 +125,6 @@ const Display = () => {
                                 <option key={index} value={col}>{col}</option>
                             ))}
                         </select>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                        <select className="w-full p-3 bg-gray-800 text-white rounded border border-gray-500 focus:outline-none focus:border-yellow-400">
-                            <option>Select a Column</option>
-                            {columns.map((col, index) => (
-                                <option key={index} value={col}>{col}</option>
-                            ))}
-                        </select>
-
-                        <div className="flex gap-4">
-                            <select className="w-full p-3 bg-gray-800 text-white rounded border border-gray-500 focus:outline-none focus:border-yellow-400">
-                                <option>Output (Chart)</option>
-                            </select>
                         </div>
                     </div>
                 </div>
@@ -178,22 +163,13 @@ const Display = () => {
 
             {/* Visualizations - Updated to use analysisResult if available */}
             <div className="w-full pb-10 flex justify-center">
-                <div className="w-2/5">
-                    <div className="App bg-white border-gray-900 border-8 shadow-xl"> 
-                        <LineGraph data={analysisResult?.plot_data} /> 
-                    </div>
-                </div>
                 <div className="w-1/4 ml-10">
                     <div className="App bg-white border-gray-900 border-8 shadow-xl"> 
                         <PieChart data={analysisResult?.plot_data} /> 
                     </div>
                 </div>
             </div>
-            <div className="w-1/2 pb-10">
-                <div className="App bg-white border-gray-900 border-8 shadow-xl"> 
-                    <BarGraph data={analysisResult?.plot_data} /> 
-                </div>
-            </div>
+           
             <div className="w-1/2 pb-10">
                 <div className="App bg-white border-gray-900 border-8 shadow-xl"> 
                     <RelationshipChart data={analysisResult || RelationshipData}/> 
