@@ -167,16 +167,16 @@ const UploadPage = () => {
   const handleUpload = async () => {
     if (!validateForm()){
       console.log("Validation failed! Errors:", errors);
-      return;
+      return false;
     }
     if (fileType === "json-link") {
       console.log("JSON link data is ready for processing.");
-      return;
+      return true;
     }
 
     if (!file) {
       setError("Please upload a file.");
-      return;
+      return false;
     }
 
     const formData = new FormData();
@@ -185,9 +185,11 @@ const UploadPage = () => {
     try {
         const response = await axios.post("http://127.0.0.1:8000/upload-csv/", formData);
         console.log("Upload successful", response.data);
+        return true;
     } catch (error) {
         console.error("Upload error:", error);
         setError("Failed to upload file. Please try again.");
+        return false;
     }
   };
 
@@ -399,6 +401,7 @@ const UploadPage = () => {
           placeholder="Enter company name"
           value={companyName}
           onChange={(e) => setCompanyName(e.target.value)}
+          onKeyPress={handleKeyPress}
         />
         {errors.companyName && <p className="text-red-500 text-sm">{errors.companyName}</p>}
 
@@ -410,7 +413,13 @@ const UploadPage = () => {
           } rounded-lg text-white placeholder-gray-400 focus:outline-double focus:outline-4 outline-white hover:border-white transition duration-300`}
           placeholder="Enter contact number"
           value={contactNumber}
-          onChange={(e) => setContactNumber(e.target.value)}
+          maxLength={11}
+          onChange={(e) => {
+            const value = e.target.value;
+            if (/^\d{0,11}$/.test(value)) {
+              setContactNumber(value);
+            }
+          }}
           onKeyPress={handleKeyPress}
         />
         {errors.contactNumber && <p className="text-red-500 text-sm">{errors.contactNumber}</p>}
