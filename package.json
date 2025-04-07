@@ -1,9 +1,6 @@
 {
   "dependencies": {
-<<<<<<< HEAD
-=======
     "@tanstack/react-table": "^8.21.2",
->>>>>>> eead8e243544566650fc3cbf2f9cefea28a7464b
     "chart.js": "^4.4.8",
     "react-chartjs-2": "^5.3.0",
     "axios": "^1.8.4",
