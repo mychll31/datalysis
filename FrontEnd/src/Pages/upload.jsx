@@ -4,7 +4,7 @@ import CollapsibleSidebar from "../Components/Sidebar";
 import axios from 'axios';
 import Papa from 'papaparse';
 import UploadModal from "../Components/UploadModal";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import "./UploadPage.css";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -25,6 +25,16 @@ const UploadPage = () => {
   const [companyName, setCompanyName] = useState("");
   const [contactNumber, setContactNumber] = useState("");
   const [errors, setErrors] = useState({});
+  const [preservedCharts, setPreservedCharts] = useState([]);
+
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (location.state?.preserveCharts) {
+      setPreservedCharts(location.state.preserveCharts);
+    }
+  }, [location.state]);
 
   useEffect(() => {
     const fetchUserInfo = async () => {
@@ -205,8 +215,6 @@ const UploadPage = () => {
     setShowModal(false);
   };
 
-  const navigate = useNavigate();
-
   const handleFileTypeChange = (e) => {
     setFileType(e.target.value);
     setIsFileTypeSelected(false);
@@ -262,7 +270,14 @@ const UploadPage = () => {
         });
   
         setTimeout(() => {
-          navigate("/Display-Page", { state: { csvData, columns } });
+          navigate("/Display-Page", { 
+            state: { 
+              csvData, 
+              columns,
+              file,
+              preserveCharts: preservedCharts 
+            } 
+          });
         }, 3000);
   
       } catch (error) {

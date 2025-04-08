@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import GraphSidebar from "../Components/SidebarForGraph";
 import TableSidebar from "../Components/SidebarForTable";
 import CsvTable from "../Components/CsvTable";
@@ -11,6 +11,7 @@ import { InsightComponent } from "../Components/Insights";
 
 const Display = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const { csvData = [], columns = [], file } = location.state || {};
   const [targetColumn1, setTargetColumn1] = useState("");
   const [targetColumn2, setTargetColumn2] = useState("");
@@ -18,7 +19,12 @@ const Display = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
-  const [analysisResult, setAnalysisResult] = useState(null);
+  const [charts, setCharts] = useState([]); // Array to store multiple charts
+
+  const handleUploadAnother = () => {
+    // Navigate back to upload page while preserving the current charts
+    navigate('/upload-page', { state: { preserveCharts: charts } });
+  };
 
   const handleApply = async () => {
     // For pie chart, only require one column
@@ -91,8 +97,17 @@ const Display = () => {
       }
 
       setSuccess("Analysis completed successfully!");
-      setAnalysisResult(result); // Store the analysis result
-      console.log("Analysis Results:", result);
+      
+      // Add the new chart to the charts array
+      setCharts(prevCharts => [
+        ...prevCharts,
+        {
+          type: outputType,
+          data: result,
+          targetColumn1,
+          targetColumn2
+        }
+      ]);
 
     } catch (error) {
       console.error("Full error:", error);
@@ -102,7 +117,6 @@ const Display = () => {
     }
   };
 
-  // Prepare pie chart data in the format expected by the PieChart component
   const preparePieChartData = (plotData) => {
     if (!plotData) return null;
     return {
@@ -110,8 +124,16 @@ const Display = () => {
         labels: plotData.labels || [],
         values: plotData.values || []
       }
-      // Optionally, include additional info like column_stats if available
     };
+  };
+
+  const handleAddChart = () => {
+    // Reset the form for a new chart
+    setTargetColumn1("");
+    setTargetColumn2("");
+    setOutputType("relationship");
+    setError(null);
+    setSuccess(null);
   };
 
   return (
@@ -167,7 +189,10 @@ const Display = () => {
         </div>
 
         <div className="flex flex-col w-1/4 self-end">
-          <button className="w-36 h-24 mx-10 mb-5 text-xl bg-yellow-500 text-black font-bold rounded-lg hover:bg-yellow-600 transition duration-300">
+          <button 
+            className="w-36 h-24 mx-10 mb-5 text-xl bg-yellow-500 text-black font-bold rounded-lg hover:bg-yellow-600 transition duration-300"
+            onClick={handleUploadAnother}
+          >
             UPLOAD <br /> ANOTHER <br /> CSV
           </button>
           <button
@@ -176,6 +201,12 @@ const Display = () => {
             disabled={isProcessing}
           >
             {isProcessing ? "PROCESSING..." : "ANALYZE"}
+          </button>
+          <button
+            className="w-36 h-12 mx-10 mb-3 bg-yellow-500 text-black font-bold rounded-lg hover:bg-yellow-600 transition duration-300"
+            onClick={handleAddChart}
+          >
+            ADD CHART
           </button>
           {error && (
             <div className="mx-10 text-red-500 text-sm mb-2">
@@ -198,42 +229,48 @@ const Display = () => {
         )}
       </div>
 
-      {/* Visualizations */}
-      {outputType === "pie" && analysisResult?.plot_data && (
-        <div className="w-full pb-10 flex justify-center">
-          <div className="w-1/2 ml-10">
-            <div className="App bg-white border-gray-900 border-8 shadow-xl p-4 rounded-lg">
-              <PieChart
-                data={preparePieChartData(analysisResult.plot_data)}
-                title={`Distribution of ${targetColumn1}`}
-              />
+      {/* Display all charts */}
+      {charts.map((chart, index) => (
+        <div key={index} className="w-full pb-10 flex flex-col items-center">
+          {chart.type === "pie" && chart.data?.plot_data && (
+            <div className="w-1/2">
+              <div className="App bg-white border-gray-900 border-8 shadow-xl p-4 rounded-lg">
+                <PieChart
+                  data={preparePieChartData(chart.data.plot_data)}
+                  title={`Distribution of ${chart.targetColumn1}`}
+                />
+              </div>
             </div>
-          </div>
+          )}
+
+          {chart.type === "relationship" && (
+            <>
+              {chart.data?.column_stats &&
+                chart.data.column_stats[chart.targetColumn1]?.type === "categorical" &&
+                chart.data.column_stats[chart.targetColumn2]?.type === "categorical" ? (
+                  <div className="text-red-500 text-center my-4">
+                    Error: Both selected columns cannot be categorical. Please choose at least one numeric column for relationship analysis.
+                  </div>
+                ) : (
+                  <div className="w-1/2">
+                    <div className="App bg-white border-gray-900 border-8 shadow-xl">
+                      <RelationshipChart data={chart.data || RelationshipData} />
+                    </div>
+                  </div>
+                )}
+            </>
+          )}
+
+          {/* Statistics Summary for each chart */}
+          {index === charts.length - 1 && (
+            <>
+              <h2 className="w-1/2 text-center text-lg text-gray-400 font-light mt-10">Statistics Summary</h2>
+              <StatisticsSummary stats={chart.data?.column_stats} />
+              <InsightComponent data={chart.data || RelationshipData} />
+            </>
+          )}
         </div>
-      )}
-
-      {outputType === "relationship" && (
-        <>
-          {/* If analysisResult exists and both columns are categorical, show error message */}
-          {analysisResult?.column_stats &&
-            analysisResult.column_stats[targetColumn1]?.type === "categorical" &&
-            analysisResult.column_stats[targetColumn2]?.type === "categorical" ? (
-              <div className="text-red-500 text-center my-4">
-                Error: Both selected columns cannot be categorical. Please choose at least one numeric column for relationship analysis.
-              </div>
-            ) : (
-              <div className="w-1/2 pb-10">
-                <div className="App bg-white border-gray-900 border-8 shadow-xl">
-                  <RelationshipChart data={analysisResult || RelationshipData} />
-                </div>
-              </div>
-            )}
-        </>
-      )}
-
-      <h2 className="w-1/2 text-center text-lg text-gray-400 font-light">Statistics Summary</h2>
-      <StatisticsSummary stats={analysisResult?.column_stats} />
-      <InsightComponent data={analysisResult || RelationshipData} />
+      ))}
     </section>
   );
 };
