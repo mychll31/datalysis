@@ -1,11 +1,10 @@
 import { useState } from "react";
-import { Menu, Home, Settings, User, LogOut, Loader, ChevronLeft } from "lucide-react";
+import { Menu, Home, Settings, User, LogOut, Loader } from "lucide-react";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { useNavigate } from "react-router-dom";
 
 const TableSidebar = () => {
-  const [isOpen, setIsOpen] = useState(false); // Initially closed
+  const [isOpen, setIsOpen] = useState(false);
   const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
@@ -16,13 +15,13 @@ const TableSidebar = () => {
       const response = await fetch("http://localhost:8000/api/logout/", {
         method: "POST",
         credentials: "include",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json" }, // ✅ Add headers
       });
 
       if (response.ok) {
         console.log("User logged out successfully");
 
-        localStorage.removeItem("username");
+        localStorage.removeItem("username"); // ✅ Only remove relevant data
 
         if (localStorage.getItem("rememberMe") !== "true") {
           localStorage.removeItem("rememberedEmail");
@@ -46,59 +45,33 @@ const TableSidebar = () => {
     }
   };
 
-  const navigate = useNavigate();
-
-  const handleGoBack = () => {
-    navigate(-1);
-  };
-
   return (
     <div className="fixed z-50 left-0">
       {/* Sidebar */}
       <div
         className={`text-gray-900 h-screen p-5 flex flex-col transition-all duration-300 ${
-          isOpen ? "bg-white rounded-l-2xl w-60" : "w-0"
+          isOpen ? "bg-white rounded-r-2xl w-60" : "w-0"
         }`}
       >
-        {/* Toggle Button */}
         <button
-          className={`${
-            isOpen ? "text-gray-900 right-40" : "text-white right-5 bg-slate-700 shadow-md"
-          } mb-5 focus:outline-none fixed p-2 rounded-xl transition-all duration-300`}
+          className="text-gray-900 mb-5 focus:outline-none"
           onClick={() => setIsOpen(!isOpen)}
         >
-          {isOpen ? (
-            <ChevronLeft className="w-9 h-9" />
-          ) : (
-            <Menu className="w-9 h-9" />
-          )}
+          <Menu className="w-9 h-9" />
         </button>
 
-        {/* Go Back Button */}
-        {isOpen && (
-          <button
-            onClick={handleGoBack}
-            className="flex items-center space-x-2 p-2 rounded-lg cursor-pointer hover:bg-gray-200 transition-colors duration-200 mb-4"
-          >
-            <ChevronLeft className="w-5 h-5" />
-            <span>Go Back</span>
-          </button>
-        )}
-
-        {/* Sidebar Items */}
         <nav className="flex flex-col space-y-4">
           <SidebarItem icon={<Home />} label="Home" isOpen={isOpen} href="/homepage" />
           <SidebarItem icon={<User />} label="Profile" isOpen={isOpen} />
           <SidebarItem icon={<Settings />} label="Insert Table" isOpen={isOpen} />
         </nav>
 
-        {/* Logout Button */}
         <div className="mt-auto">
           <SidebarItem
             icon={<LogOut />}
             label="Logout"
             isOpen={isOpen}
-            onClick={() => setIsLogoutConfirmOpen(true)} // Open confirmation
+            onClick={() => setIsLogoutConfirmOpen(true)}
           />
         </div>
       </div>
@@ -140,19 +113,14 @@ const TableSidebar = () => {
   );
 };
 
-// Sidebar Item Component
 const SidebarItem = ({ icon, label, isOpen, href, onClick }) => {
   return (
     <div
-      className="flex items-center space-x-4 p-2 mt-16 rounded-lg cursor-pointer hover:bg-gray-700 transition-colors duration-200"
+      className="flex items-center space-x-4 p-2 rounded-lg cursor-pointer hover:bg-gray-700 transition-colors duration-200"
       onClick={onClick}
     >
       {icon}
-      {isOpen ? (
-        <a href={href} className="text-lg p-2 rounded-lg">
-          {label}
-        </a>
-      ) : null}
+      {isOpen ? <a href={href} className="text-lg p-2 rounded-lg">{label}</a> : null}
     </div>
   );
 };
