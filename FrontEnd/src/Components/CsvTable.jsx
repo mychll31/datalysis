@@ -14,18 +14,65 @@ const CsvTable = ({ columns: csvColumns, csvData }) => {
   const [filterValue, setFilterValue] = useState('');
   const [columnFilters, setColumnFilters] = useState([]);
 
-  // Prepare columns for react-table
+  // Prepare columns for react-table with custom filter function assigned
   const columns = useMemo(() => (
     csvColumns.map(col => ({
       accessorKey: col,
       header: col,
       cell: info => info.getValue(),
+      filterFn: 'customFilter', // Apply custom filter function for range filtering
       meta: {
         isNumeric: csvData.some(row => !isNaN(parseFloat(row[col])) && isFinite(row[col])),
         isDate: csvData.some(row => !isNaN(Date.parse(row[col])))
       }
     }))
   ), [csvColumns, csvData]);
+
+  // Custom filter function that handles ranges for numeric columns
+  const customFilterFn = (row, columnId, filterValue) => {
+    const columnMeta = columns.find(col => col.accessorKey === columnId)?.meta;
+    const cellValue = row.getValue(columnId);
+    
+    if (!filterValue) return true;
+    
+    // Handle numeric range filters (e.g., "10-20", ">50", "<30")
+    if (columnMeta?.isNumeric && !isNaN(parseFloat(cellValue))) {
+      const numValue = parseFloat(cellValue);
+      
+      // Range format (e.g., "10-20")
+      if (filterValue.includes('-')) {
+        const [min, max] = filterValue.split('-').map(Number);
+        return numValue >= min && numValue <= max;
+      }
+      // Greater than (e.g., ">50")
+      else if (filterValue.startsWith('>')) {
+        const threshold = parseFloat(filterValue.substring(1));
+        return numValue > threshold;
+      }
+      // Less than (e.g., "<30")
+      else if (filterValue.startsWith('<')) {
+        const threshold = parseFloat(filterValue.substring(1));
+        return numValue < threshold;
+      }
+      // Greater than or equal (e.g., ">=50")
+      else if (filterValue.startsWith('>=')) {
+        const threshold = parseFloat(filterValue.substring(2));
+        return numValue >= threshold;
+      }
+      // Less than or equal (e.g., "<=30")
+      else if (filterValue.startsWith('<=')) {
+        const threshold = parseFloat(filterValue.substring(2));
+        return numValue <= threshold;
+      }
+    }
+    
+    // Default string contains filter for non-numeric or simple values
+    return String(cellValue).toLowerCase().includes(filterValue.toLowerCase());
+  };
+
+  const infoText = `
+      For numeric columns, use: "10-20", ">50", "<=30", etc.
+  `;
 
   // Create the table instance with pagination
   const table = useReactTable({
@@ -41,6 +88,9 @@ const CsvTable = ({ columns: csvColumns, csvData }) => {
     getFilteredRowModel: getFilteredRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
+    filterFns: {
+      customFilter: customFilterFn,
+    },
     initialState: {
       pagination: {
         pageSize: 20, // Default page size
@@ -68,83 +118,59 @@ const CsvTable = ({ columns: csvColumns, csvData }) => {
   };
 
   // Enhanced pagination controls
-const getPageNumbers = () => {
-  const currentPage = table.getState().pagination.pageIndex;
-  const pageCount = table.getPageCount();
-  const pages = [];
-  const maxVisiblePages = 5; // Number of page buttons to show
+  const getPageNumbers = () => {
+    const currentPage = table.getState().pagination.pageIndex;
+    const pageCount = table.getPageCount();
+    const pages = [];
+    const maxVisiblePages = 5; // Number of page buttons to show
 
-  if (pageCount <= maxVisiblePages) {
-    // Show all pages if there aren't too many
-    for (let i = 0; i < pageCount; i++) {
-      pages.push(i);
+    if (pageCount <= maxVisiblePages) {
+      // Show all pages if there aren't too many
+      for (let i = 0; i < pageCount; i++) {
+        pages.push(i);
+      }
+    } else {
+      // Skip showing page 1 (index 0) when we're on page 4 or later
+      const shouldShowFirstPage = currentPage < 3;
+
+      if (shouldShowFirstPage) {
+        pages.push(0); // Show first page only when needed
+      }
+
+      // Calculate range around current page
+      let start = Math.max(shouldShowFirstPage ? 1 : 0, currentPage - 1);
+      let end = Math.min(pageCount - (shouldShowFirstPage ? 2 : 1), currentPage + 1);
+
+      // Adjust if we're at the start or end
+      if (currentPage <= 2) {
+        end = shouldShowFirstPage ? 3 : 2;
+      } else if (currentPage >= pageCount - 3) {
+        start = pageCount - 4;
+      }
+
+      // Add ellipsis if needed before current range
+      if (start > (shouldShowFirstPage ? 1 : 0)) {
+        pages.push('...');
+      }
+
+      // Add pages in current range
+      for (let i = start; i <= end; i++) {
+        pages.push(i);
+      }
+
+      // Add ellipsis if needed after current range
+      if (end < pageCount - (shouldShowFirstPage ? 2 : 1)) {
+        pages.push('...');
+      }
+
+      // Always show last page unless it's already included
+      if (end < pageCount - 1) {
+        pages.push(pageCount - 1);
+      }
     }
-  } else {
-    // Skip showing page 1 (index 0) when we're on page 4 or later
-    const shouldShowFirstPage = currentPage < 3;
 
-    if (shouldShowFirstPage) {
-      pages.push(0); // Show first page only when needed
-    }
-
-    // Calculate range around current page
-    let start = Math.max(shouldShowFirstPage ? 1 : 0, currentPage - 1);
-    let end = Math.min(pageCount - (shouldShowFirstPage ? 2 : 1), currentPage + 1);
-
-    // Adjust if we're at the start or end
-    if (currentPage <= 2) {
-      end = shouldShowFirstPage ? 3 : 2;
-    } else if (currentPage >= pageCount - 3) {
-      start = pageCount - 4;
-    }
-
-    // Add ellipsis if needed before current range
-    if (start > (shouldShowFirstPage ? 1 : 0)) {
-      pages.push('...');
-    }
-
-    // Add pages in current range
-    for (let i = start; i <= end; i++) {
-      pages.push(i);
-    }
-
-    // Add ellipsis if needed after current range
-    if (end < pageCount - (shouldShowFirstPage ? 2 : 1)) {
-      pages.push('...');
-    }
-
-    // Always show last page unless it's already included
-    if (end < pageCount - 1) {
-      pages.push(pageCount - 1);
-    }
-  }
-
-  return pages;
-};
-
-// In your JSX where you render the pagination buttons:
-{getPageNumbers().map((page, index) => (
-  page === 'left-ellipsis' || page === 'right-ellipsis' ? (
-    <span
-      key={index}
-      className="px-2 py-1 text-xs text-gray-400 cursor-default"
-    >
-      ...
-    </span>
-  ) : (
-    <button
-      key={index}
-      className={`px-2 py-1 text-xs rounded ${
-        page === table.getState().pagination.pageIndex
-          ? 'bg-blue-600 text-white'
-          : 'bg-gray-700 text-white hover:bg-gray-600'
-      } border border-gray-600`}
-      onClick={() => table.setPageIndex(page)}
-    >
-      {page + 1}
-    </button>
-  )
-))}
+    return pages;
+  };
 
   return (
     <div className="w-full bg-gray-800 p-2 rounded-lg shadow-lg">
@@ -210,6 +236,13 @@ const getPageNumbers = () => {
         </div>
       )}
 
+      {/* Filter examples tooltip */}
+      <div className="text-xs text-gray-400 mb-2 text-right mr-28">
+        <p>
+          {infoText}
+        </p>
+      </div>
+
       {/* Compact Table */}
       <div className="overflow-auto border border-gray-700 rounded-lg" style={{ maxHeight: '65vh' }}>
         <table className="min-w-full text-white border-collapse">
@@ -227,10 +260,10 @@ const getPageNumbers = () => {
                         header.column.columnDef.header,
                         header.getContext()
                       )}
-                      {{
+                      {({
                         asc: '↑',
                         desc: '↓',
-                      }[header.column.getIsSorted()] ?? null}
+                      }[header.column.getIsSorted()] ?? null)}
                     </div>
                   </th>
                 ))}

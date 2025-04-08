@@ -43,6 +43,19 @@ def load_data(file_obj, file_type):
         logging.error(f"Error loading {file_type} data: {str(e)}")
         raise
 
+def process_pie_chart(df, target_column):
+    """Process data for pie chart visualization"""
+    if target_column not in df.columns:
+        raise ValueError(f"Column '{target_column}' not found")
+    
+    col = df[target_column]
+    value_counts = col.value_counts().to_dict()
+    
+    return {
+        'labels': list(value_counts.keys()),
+        'values': list(value_counts.values())
+    }
+
 @csrf_exempt
 def analyze_data(request):
     if request.method != 'POST':
@@ -52,6 +65,7 @@ def analyze_data(request):
         # 1. Validate input
         data_source = None
         file_type = None
+        output_type = request.POST.get('output_type', 'relationship').strip()
         
         # Check for file upload
         if 'file' in request.FILES:
@@ -88,22 +102,57 @@ def analyze_data(request):
         target_column1 = request.POST.get('target_column1', '').strip()
         target_column2 = request.POST.get('target_column2', '').strip()
         
-        if not target_column1 or not target_column2:
-            return JsonResponse({'error': 'Both target columns must be specified'}, status=400)
+        # 2. Validate columns based on output type
+        if output_type == 'pie':
+            if not target_column1:
+                return JsonResponse({'error': 'Target column must be specified for pie chart'}, status=400)
+        else:
+            if not target_column1 or not target_column2:
+                return JsonResponse({'error': 'Both target columns must be specified'}, status=400)
 
-        # 2. Process data
+        # 3. Process data
         df = load_data(data_source, file_type)
         if df is None:
             return JsonResponse({'error': 'Failed to process data'}, status=400)
 
-        # 3. Validate columns exist
+        # 4. Handle different output types
+        if output_type == 'pie':
+            # Pie chart processing
+            if target_column1 not in df.columns:
+                return JsonResponse({
+                    'error': f'Column "{target_column1}" not found. Available: {list(df.columns)}'
+                }, status=400)
+            
+            pie_data = process_pie_chart(df, target_column1)
+            col = df[target_column1]
+            is_numeric = pd.api.types.is_numeric_dtype(col)
+            
+            response = {
+                'status': 'success',
+                'data_source_type': file_type,
+                'output_type': 'pie',
+                'plot_data': pie_data,
+                'column_names': [target_column1],
+                'column_stats': {
+                    target_column1: {
+                        'type': 'numeric' if is_numeric else 'categorical',
+                        'unique_values': int(col.nunique()),
+                        'null_count': int(col.isnull().sum())
+                    }
+                }
+            }
+            
+            return JsonResponse(response)
+        
+        # Original relationship analysis for other output types
+        # Validate columns exist
         for col in [target_column1, target_column2]:
             if col not in df.columns:
                 return JsonResponse({
                     'error': f'Column "{col}" not found. Available: {list(df.columns)}'
                 }, status=400)
 
-        # 4. Prepare columns and determine types
+        # Prepare columns and determine types
         col1 = pd.to_numeric(df[target_column1], errors='ignore')
         col2 = pd.to_numeric(df[target_column2], errors='ignore')
         
@@ -117,7 +166,7 @@ def analyze_data(request):
             "categorical-categorical"
         )
 
-        # 5. Initialize response structure
+        # Initialize response structure
         plot_data = {
             'x': [],
             'y': [],
@@ -129,7 +178,7 @@ def analyze_data(request):
         stats_results = None
         model_perf = None
 
-        # 6. Handle each relationship type (same as before)
+        # Handle each relationship type
         if relationship_type == "numeric-numeric":
             valid_mask = col1.notna() & col2.notna()
             if sum(valid_mask) > 1:
@@ -254,10 +303,11 @@ def analyze_data(request):
                 'y': col2.astype(str).tolist()
             }
 
-        # 7. Build final response
+        # Build final response for relationship charts
         response = {
             'status': 'success',
             'data_source_type': file_type,
+            'output_type': output_type,
             'relationship_type': relationship_type,
             'correlation': correlation,
             'plot_data': plot_data,
@@ -284,7 +334,7 @@ def analyze_data(request):
         logging.exception("Processing error")
         return JsonResponse({'error': str(e)}, status=500)
     
-    @csrf_exempt
-    def upload_csv(request):
-        """Legacy endpoint that forwards to analyze_data"""
-        return analyze_data(request)
+@csrf_exempt
+def upload_csv(request):
+    """Legacy endpoint that forwards to analyze_data"""
+    return analyze_data(request)

@@ -4,7 +4,7 @@ import CollapsibleSidebar from "../Components/Sidebar";
 import axios from 'axios';
 import Papa from 'papaparse';
 import UploadModal from "../Components/UploadModal";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import "./UploadPage.css";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -25,6 +25,16 @@ const UploadPage = () => {
   const [companyName, setCompanyName] = useState("");
   const [contactNumber, setContactNumber] = useState("");
   const [errors, setErrors] = useState({});
+  const [preservedCharts, setPreservedCharts] = useState([]);
+
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (location.state?.preserveCharts) {
+      setPreservedCharts(location.state.preserveCharts);
+    }
+  }, [location.state]);
 
   useEffect(() => {
     const fetchUserInfo = async () => {
@@ -167,16 +177,16 @@ const UploadPage = () => {
   const handleUpload = async () => {
     if (!validateForm()){
       console.log("Validation failed! Errors:", errors);
-      return;
+      return false;
     }
     if (fileType === "json-link") {
       console.log("JSON link data is ready for processing.");
-      return;
+      return true;
     }
 
     if (!file) {
       setError("Please upload a file.");
-      return;
+      return false;
     }
 
     const formData = new FormData();
@@ -185,9 +195,11 @@ const UploadPage = () => {
     try {
         const response = await axios.post("http://127.0.0.1:8000/upload-csv/", formData);
         console.log("Upload successful", response.data);
+        return true;
     } catch (error) {
         console.error("Upload error:", error);
         setError("Failed to upload file. Please try again.");
+        return false;
     }
   };
 
@@ -202,8 +214,6 @@ const UploadPage = () => {
     console.log("File to be uploaded:", file.name);
     setShowModal(false);
   };
-
-  const navigate = useNavigate();
 
   const handleFileTypeChange = (e) => {
     setFileType(e.target.value);
@@ -260,7 +270,14 @@ const UploadPage = () => {
         });
   
         setTimeout(() => {
-          navigate("/Display-Page", { state: { csvData, columns } });
+          navigate("/Display-Page", { 
+            state: { 
+              csvData, 
+              columns,
+              file,
+              preserveCharts: preservedCharts 
+            } 
+          });
         }, 3000);
   
       } catch (error) {
@@ -399,6 +416,7 @@ const UploadPage = () => {
           placeholder="Enter company name"
           value={companyName}
           onChange={(e) => setCompanyName(e.target.value)}
+          onKeyPress={handleKeyPress}
         />
         {errors.companyName && <p className="text-red-500 text-sm">{errors.companyName}</p>}
 
@@ -410,7 +428,13 @@ const UploadPage = () => {
           } rounded-lg text-white placeholder-gray-400 focus:outline-double focus:outline-4 outline-white hover:border-white transition duration-300`}
           placeholder="Enter contact number"
           value={contactNumber}
-          onChange={(e) => setContactNumber(e.target.value)}
+          maxLength={11}
+          onChange={(e) => {
+            const value = e.target.value;
+            if (/^\d{0,11}$/.test(value)) {
+              setContactNumber(value);
+            }
+          }}
           onKeyPress={handleKeyPress}
         />
         {errors.contactNumber && <p className="text-red-500 text-sm">{errors.contactNumber}</p>}

@@ -30,6 +30,12 @@ ChartJS.register(
 
 export const RelationshipChart = ({ data }) => {
   const chartRef = useRef(null);
+
+  // Safety check: if data, plot_data, or column_names is missing, return fallback UI
+  if (!data || !data.plot_data || !data.column_names) {
+    return <div>No relationship data available</div>;
+  }
+
   const { 
     plot_data, 
     relationship_type, 
@@ -66,12 +72,16 @@ export const RelationshipChart = ({ data }) => {
     }
   };
 
-  // Prepare data - only actual points, no trend line
+  // Safely prepare actual data from plot_data
+  const actualData = (plot_data && Array.isArray(plot_data.x) && Array.isArray(plot_data.y))
+    ? plot_data.x.map((xVal, i) => ({ x: xVal, y: plot_data.y[i] }))
+    : [];
+
   const chartData = {
     datasets: [
       {
         label: 'Actual Data',
-        data: plot_data.x.map((xVal, i) => ({ x: xVal, y: plot_data.y[i] })),
+        data: actualData,
         backgroundColor: 'rgba(75, 192, 192, 0.8)',
         borderColor: 'rgba(75, 192, 192, 1)',
         pointRadius: 6,
@@ -85,13 +95,12 @@ export const RelationshipChart = ({ data }) => {
   // Build dynamic subtitle with relevant metrics
   const buildSubtitle = () => {
     if (relationship_type === 'numeric-numeric') {
-      return `Correlation: ${correlation?.toFixed(2) || 'N/A'}`;
-    }
-    else if (relationship_type === 'numeric-categorical') {
+      return `Correlation: ${correlation ? correlation.toFixed(2) : 'N/A'}`;
+    } else if (relationship_type === 'numeric-categorical') {
       if (statistical_tests?.anova) {
         return `ANOVA p-value: ${statistical_tests.anova.p_value.toFixed(4)}`;
       }
-      return `Point-Biserial: ${correlation?.toFixed(2) || 'N/A'}`;
+      return `Point-Biserial: ${correlation ? correlation.toFixed(2) : 'N/A'}`;
     }
     return '';
   };
@@ -121,7 +130,7 @@ export const RelationshipChart = ({ data }) => {
           label: (context) => {
             const label = context.dataset.label || '';
             const value = context.parsed;
-            return `${label}: ${value.y?.toFixed(2) || value.y}`;
+            return `${label}: ${value.y ? value.y.toFixed(2) : value.y}`;
           }
         }
       },
