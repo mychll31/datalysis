@@ -1,11 +1,11 @@
 import { useState } from "react";
-import { Menu, Home, Settings, User, LogOut, Loader, ArrowLeft, ChevronLeft  } from "lucide-react";
+import { Menu, Home, Settings, User, LogOut, Loader, ChevronLeft } from "lucide-react";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useNavigate } from "react-router-dom";
 
 const TableSidebar = () => {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(false); // Initially closed
   const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
@@ -16,13 +16,13 @@ const TableSidebar = () => {
       const response = await fetch("http://localhost:8000/api/logout/", {
         method: "POST",
         credentials: "include",
-        headers: { "Content-Type": "application/json" }, // ✅ Add headers
+        headers: { "Content-Type": "application/json" },
       });
 
       if (response.ok) {
         console.log("User logged out successfully");
 
-        localStorage.removeItem("username"); // ✅ Only remove relevant data
+        localStorage.removeItem("username");
 
         if (localStorage.getItem("rememberMe") !== "true") {
           localStorage.removeItem("rememberedEmail");
@@ -44,11 +44,12 @@ const TableSidebar = () => {
       setIsLoggingOut(false);
       setIsLogoutConfirmOpen(false);
     }
+  };
+
   const navigate = useNavigate();
 
-  // Function to handle going back
   const handleGoBack = () => {
-    navigate(-1); // This will take the user to the previous page in history
+    navigate(-1);
   };
 
   return (
@@ -56,16 +57,21 @@ const TableSidebar = () => {
       {/* Sidebar */}
       <div
         className={`text-gray-900 h-screen p-5 flex flex-col transition-all duration-300 ${
-          isOpen ? "bg-white rounded-r-2xl w-60" : "w-0"
+          isOpen ? "bg-white rounded-l-2xl w-60" : "w-0"
         }`}
       >
+        {/* Toggle Button */}
         <button
           className={`${
-            isOpen ? "text-gray-900" : "text-white"
-          } mb-5 focus:outline-none`}
+            isOpen ? "text-gray-900 right-40" : "text-white right-5 bg-slate-700 shadow-md"
+          } mb-5 focus:outline-none fixed p-2 rounded-xl transition-all duration-300`}
           onClick={() => setIsOpen(!isOpen)}
         >
-          <Menu className="w-9 h-9" />
+          {isOpen ? (
+            <ChevronLeft className="w-9 h-9" />
+          ) : (
+            <Menu className="w-9 h-9" />
+          )}
         </button>
 
         {/* Go Back Button */}
@@ -86,12 +92,13 @@ const TableSidebar = () => {
           <SidebarItem icon={<Settings />} label="Insert Table" isOpen={isOpen} />
         </nav>
 
+        {/* Logout Button */}
         <div className="mt-auto">
           <SidebarItem
             icon={<LogOut />}
             label="Logout"
             isOpen={isOpen}
-            onClick={() => setIsLogoutConfirmOpen(true)}
+            onClick={() => setIsLogoutConfirmOpen(true)} // Open confirmation
           />
         </div>
       </div>
@@ -133,19 +140,21 @@ const TableSidebar = () => {
   );
 };
 
+// Sidebar Item Component
 const SidebarItem = ({ icon, label, isOpen, href, onClick }) => {
   return (
     <div
-      className="flex items-center space-x-4 p-2 rounded-lg cursor-pointer hover:bg-gray-200 transition-colors duration-200"
+      className="flex items-center space-x-4 p-2 mt-16 rounded-lg cursor-pointer hover:bg-gray-700 transition-colors duration-200"
       onClick={onClick}
     >
-      <div className="w-6 h-6">{icon}</div>
-      {isOpen && (
-        <span className="text-lg">{label}</span>
-      )}
+      {icon}
+      {isOpen ? (
+        <a href={href} className="text-lg p-2 rounded-lg">
+          {label}
+        </a>
+      ) : null}
     </div>
   );
-};
 };
 
 export default TableSidebar;
