@@ -252,21 +252,13 @@ const Display = () => {
                     Error: Both selected columns cannot be categorical. Please choose at least one numeric column for relationship analysis.
                   </div>
                 ) : (
-                  <div className="w-1/2">
-                    <div className="App bg-white border-gray-900 border-8 shadow-xl">
+                  <div>
+                    <div className="App bg-white border-gray-900 border-8 shadow-xl flex flex-row">
                       <RelationshipChart data={chart.data || RelationshipData} />
+                      <InsightComponent data={chart.data || RelationshipData} />
                     </div>
                   </div>
                 )}
-            </>
-          )}
-
-          {/* Statistics Summary for each chart */}
-          {index === charts.length - 1 && (
-            <>
-              <h2 className="w-1/2 text-center text-lg text-gray-400 font-light mt-10">Statistics Summary</h2>
-              <StatisticsSummary stats={chart.data?.column_stats} />
-              <InsightComponent data={chart.data || RelationshipData} />
             </>
           )}
         </div>
