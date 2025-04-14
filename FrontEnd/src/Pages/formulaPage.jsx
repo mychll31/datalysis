@@ -76,6 +76,28 @@ const FormulaPage = () => {
     }
   }, [fileType]); 
 
+  const [calculatorInput, setCalculatorInput] = useState("");
+
+const handleCalculatorClick = (value) => {
+  if (value === "C") {
+    setCalculatorInput("");
+  } else if (value === "Backspace") {
+    setCalculatorInput((prev) => prev.slice(0, -1));
+  } else if (value === "=") {
+    try {
+      // Optional: Add support for "sqrt" as square root
+      let expression = calculatorInput.replace(/sqr/g, "Math.sqrt");
+      let result = eval(expression); // Use a safe math parser in production
+      setCalculatorInput(result.toString());
+    } catch (error) {
+      setCalculatorInput("Error");
+    }
+  } else {
+    setCalculatorInput((prev) => prev + value);
+  }
+};
+
+
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
     setFile(selectedFile);
@@ -291,6 +313,7 @@ const FormulaPage = () => {
   };
 
   return (
+    
     <div className="flex flex-col items-center min-h-screen bg-cover bg-center bg-uploadPage bg-gray-900 text-white font-inter">
       <div className="ml-10 w-screen">
         <CollapsibleSidebar />
@@ -323,6 +346,7 @@ const FormulaPage = () => {
       </div>
           
       <div className="h-32"></div>
+      
 
       <UploadModal
         show={showModal}
@@ -334,8 +358,17 @@ const FormulaPage = () => {
         totalDataPoints={totalDataPoints}
         handleConfirm={handleConfirm}
       />
-    <CalculatorButtons />
+      <div className="flex justify-end w-full mt-7">
+        <div className="w-1/3"> {/* Adjust width as necessary */}
+          <CalculatorButtons 
+            output={calculatorInput} 
+            onButtonClick={handleCalculatorClick} 
+          />
+        </div>
+      </div>
     </div>
+    
+
   );
 };
 
