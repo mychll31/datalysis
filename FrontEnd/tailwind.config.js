@@ -26,7 +26,9 @@ module.exports = {
         primary: "#14323D"
       },
       fontFamily: {
-        inter: ["Inter", "sans-serif"]
+        inter: ["Inter", "sans-serif"],
+        istok: ['Istok Web', 'sans-serif'],
+
       }
     },
   },

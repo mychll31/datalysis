@@ -85,6 +85,13 @@ export const PieChart = ({ data, title = "Distribution" }) => {
     },
   };
 
+  // Calculate summary statistics
+  const total = chartData.datasets[0].data.reduce((sum, value) => sum + value, 0);
+  const topCategoryIndex = chartData.datasets[0].data.indexOf(Math.max(...chartData.datasets[0].data));
+  const topCategory = chartData.labels[topCategoryIndex];
+  const topCategoryValue = chartData.datasets[0].data[topCategoryIndex];
+  const topCategoryPercentage = Math.round((topCategoryValue / total) * 100);
+
   return (
     <div className="relative w-full h-full bg-white p-4 rounded-lg shadow-md">
       {/* Download button positioned at top-right */}
@@ -113,6 +120,26 @@ export const PieChart = ({ data, title = "Distribution" }) => {
       {/* Chart container with ref for capturing */}
       <div ref={chartRef} className="w-full h-full">
         <Pie options={options} data={chartData} className="w-full h-full" />
+        
+        {/* Summary section */}
+        <div className="mt-4 p-3 bg-gray-50 rounded-md">
+          <h3 className="font-medium text-gray-700 mb-2">Summary</h3>
+          <div className="grid grid-cols-2 gap-2 text-sm">
+            <div>
+              <span className="text-gray-500">Total items:</span>
+              <span className="font-medium ml-1">{total}</span>
+            </div>
+            <div>
+              <span className="text-gray-500">Categories:</span>
+              <span className="font-medium ml-1">{chartData.labels.length}</span>
+            </div>
+            <div className="col-span-2">
+              <span className="text-gray-500">Top category:</span>
+              <span className="font-medium ml-1">{topCategory} ({topCategoryValue} - {topCategoryPercentage}%)</span>
+            </div>
+          </div>
+        </div>
+
         {chartContent?.column_stats && chartContent.column_names && (
           <div className="text-xs text-gray-500 mt-2">
             {`Showing ${chartContent.column_stats[chartContent.column_names[0]]?.unique_values} unique values`}
