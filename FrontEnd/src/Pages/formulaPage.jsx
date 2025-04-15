@@ -1,341 +1,230 @@
-import React, { useEffect, useState } from "react";
-import NavBar from "../Components/Navbar/Navbar";
-import CollapsibleSidebar from "../Components/Sidebar";
-import axios from 'axios';
-import Papa from 'papaparse';
-import UploadModal from "../Components/UploadModal";
-import { useNavigate, useLocation } from "react-router-dom";
-import { toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
-import CalculatorButtons from "../Components/CalculatorButtons";
+import React, { useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import GraphSidebar from "../Components/SidebarForGraph";
+import TableSidebar from "../Components/SidebarForTable";
+import CsvTable from "../Components/CsvTable";
+import { FaChartLine } from "react-icons/fa";
+import Calculator from "../Components/FormulaPage/CalculatorButtons";
 
 const FormulaPage = () => {
-  const [username, setUsername] = useState("");
-  const [file, setFile] = useState(null);
-  const [csvData, setCsvData] = useState([]);
-  const [columns, setColumns] = useState([]);
-  const [rowsCount, setRowsCount] = useState(0);
-  const [showModal, setShowModal] = useState(false);
-  const [totalDataPoints, setTotalDataPoints] = useState(0);
-  const [fileType, setFileType] = useState("");
-  const [isFileTypeSelected, setIsFileTypeSelected] = useState(false);
-  const [resetTransition, setResetTransition] = useState(false);
-  const [jsonLink, setJsonLink] = useState("");
-  const [error, setError] = useState("");
-  const [companyName, setCompanyName] = useState("");
-  const [contactNumber, setContactNumber] = useState("");
-  const [errors, setErrors] = useState({});
-  const [preservedCharts, setPreservedCharts] = useState([]);
-
   const location = useLocation();
   const navigate = useNavigate();
+  const { 
+    csvData = [], 
+    columns = [], 
+    file, 
+    preserveCharts = [],
+    currentSelections = {}
+  } = location.state || {};
+  
+  const [selectedColumn, setSelectedColumn] = useState("");
+  const [sumResult, setSumResult] = useState(null);
+  const [savedVariables, setSavedVariables] = useState([]);
+  const [variableName, setVariableName] = useState("");
+  const [error, setError] = useState(null);
+  const [calculatorInput, setCalculatorInput] = useState("");
+  const [filteredData, setFilteredData] = useState(csvData); // State to hold filtered data
 
-  useEffect(() => {
-    if (location.state?.preserveCharts) {
-      setPreservedCharts(location.state.preserveCharts);
+  const calculateSum = () => {
+    if (!selectedColumn) {
+      setError("Please select a column first");
+      return;
     }
-  }, [location.state]);
 
-  useEffect(() => {
-    const fetchUserInfo = async () => {
-      try {
-        const response = await fetch("http://localhost:8000/api/user-info/", {
-          method: "GET",
-          credentials: "include",
-          mode: "cors",
-        });
-
-        console.log("Response Status:", response.status);
-
-        if (response.ok) {
-          const data = await response.json();
-          console.log("Fetch User Data:", data);
-          setUsername(data.username);
-        } else {
-          console.error("Failed to fetch user info. Status:", response.status);
-          const errorData = await response.json();
-          console.error("Error response:", errorData);
+    try {
+      let sum = 0;
+      let validNumbers = 0;
+      
+      // Use filteredData instead of csvData for the calculation
+      filteredData.forEach(row => {
+        const value = parseFloat(row[selectedColumn]);
+        if (!isNaN(value)) {
+          sum += value;
+          validNumbers++;
         }
-      } catch (error) {
-        console.error("Error fetching user info:", error);
-      }
-    };
+      });
 
-    fetchUserInfo();
-  }, []);
-
-  useEffect(() => {
-    if (fileType) {
-      setFile(null);
-      setCsvData([]);
-      setColumns([]);
-      setRowsCount(0); 
-      setTotalDataPoints(0); 
-      setJsonLink(""); 
-      setError(""); 
-    }
-  }, [fileType]); 
-
-  const handleFileChange = (e) => {
-    const selectedFile = e.target.files[0];
-    setFile(selectedFile);
-  
-    if (selectedFile) {
-      if (fileType === "csv") {
-        Papa.parse(selectedFile, {
-          complete: (result) => {
-            if (result.data.length > 0) {
-              const totalRows = result.data.length;
-              const totalCols = Object.keys(result.data[0]).length;
-
-              setColumns(Object.keys(result.data[0]));
-              setCsvData(result.data.slice(0, totalRows));
-              setRowsCount(totalRows);
-              setTotalDataPoints(totalCols * totalRows);
-              setShowModal(true);
-            }
-          },
-          header: true,
-          skipEmptyLines: true,
-        });
-      } else if (fileType === "json") {
-        const reader = new FileReader();
-        reader.onload = (event) => {
-          try {
-            const jsonData = JSON.parse(event.target.result);
-            if (Array.isArray(jsonData)) {
-              const totalRows = jsonData.length;
-              const totalCols = Object.keys(jsonData[0]).length;
-
-              setColumns(Object.keys(jsonData[0]));
-              setCsvData(jsonData.slice(0, totalRows));
-              setRowsCount(totalRows);
-              setTotalDataPoints(totalCols * totalRows);
-              setShowModal(true);
-            } else {
-              setError("Invalid JSON file. Expected an array of objects.");
-            }
-          } catch (error) {
-            setError("Failed to parse JSON file. Please check the file format.");
-          }
-        };
-        reader.readAsText(selectedFile);
-      }
-    }
-  };
-
-  const handleJsonLink = async (url) => {
-    try {
-      const response = await axios.get(url);
-      const jsonData = response.data;
-
-      if (!Array.isArray(jsonData)) {
-        throw new Error("Invalid JSON data. Expected an array of objects.");
+      if (validNumbers === 0) {
+        throw new Error("Selected column contains no valid numbers");
       }
 
-      if (jsonData.length === 0) {
-        throw new Error("JSON data is empty.");
-      }
-
-      const totalRows = jsonData.length;
-      const totalCols = Object.keys(jsonData[0]).length;
-
-      setColumns(Object.keys(jsonData[0]));
-      setCsvData(jsonData.slice(0, totalRows));
-      setRowsCount(totalRows);
-      setTotalDataPoints(totalCols * totalRows);
-      setShowModal(true);
-      setError("");
+      setSumResult(sum);
+      setError(null);
     } catch (error) {
-      console.error("Error fetching JSON data:", error);
-      setError("Invalid JSON link or data format. Please check the URL and try again.");
-      setCsvData([]);
-      setColumns([]);
-      setRowsCount(0);
-      setTotalDataPoints(0);
+      setError(error.message);
+      setSumResult(null);
     }
   };
 
-  const validateForm = () => {
-    let errors = {};
-  
-    if (!companyName.trim()) {
-      errors.companyName = "Company name is required.";
-    }
-  
-    const contactNumberPattern = /^09\d{9}$/;
-    if (!contactNumber.trim()) {
-      errors.contactNumber = "Contact number is required.";
-    } else if (!contactNumberPattern.test(contactNumber)) {
-      errors.contactNumber = "Invalid contact number. Use format: 09XXXXXXXXX.";
-    }
-  
-    setErrors(errors);
-    return Object.keys(errors).length === 0;
+  // Function to update filtered data from CsvTable
+  const handleFilterChange = (filteredData) => {
+    setFilteredData(filteredData);
   };
 
-  const handleUpload = async () => {
-    if (!validateForm()){
-      console.log("Validation failed! Errors:", errors);
-      return false;
-    }
-    if (fileType === "json-link") {
-      console.log("JSON link data is ready for processing.");
-      return true;
-    }
-
-    if (!file) {
-      setError("Please upload a file.");
-      return false;
-    }
-
-    const formData = new FormData();
-    formData.append("file", file);
-
-    try {
-        const response = await axios.post("http://127.0.0.1:8000/upload-csv/", formData);
-        console.log("Upload successful", response.data);
-        return true;
-    } catch (error) {
-        console.error("Upload error:", error);
-        setError("Failed to upload file. Please try again.");
-        return false;
-    }
-  };
-
-  const handleConfirm = () => {
-    if (fileType === "json-link") {
-      console.log("JSON link data confirmed:", csvData);
-      setShowModal(false);
+  const saveVariable = () => {
+    if (!variableName.trim()) {
+      setError("Please enter a variable name");
       return;
     }
 
-    if (!file) return;
-    console.log("File to be uploaded:", file.name);
-    setShowModal(false);
-  };
-
-  const handleFileTypeChange = (e) => {
-    setFileType(e.target.value);
-    setIsFileTypeSelected(false);
-    setResetTransition(true);
-    setTimeout(() => {
-      setIsFileTypeSelected(true);
-      setResetTransition(false);
-    }, 10);
-  };
-
-  const handleKeyPress = (e) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      handleSubmit();
-    }
-  };
-
-  const handleSubmit = async () => {
-    let newErrors = {};
-  
-    if (!companyName.trim()) newErrors.companyName = "Company name is required.";
-  
-    if (!contactNumber.trim()) {
-      newErrors.contactNumber = "Contact number is required.";
-    } else if (!/^09\d{9}$/.test(contactNumber)) {
-      newErrors.contactNumber = "Invalid contact number. Use format: 09XXXXXXXXX.";
-    }
-  
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
+    if (sumResult === null) {
+      setError("No sum result to save. Calculate sum first.");
       return;
     }
-  
-    setErrors({});
-  
-    try {
-      if (fileType === "json-link" && !csvData.length) {
-        alert("Please fetch JSON data before proceeding!");
-        return;
+
+    setSavedVariables(prev => [
+      ...prev,
+      {
+        name: variableName,
+        value: sumResult,
+        column: selectedColumn
       }
-  
-      if (fileType !== "json-link" && !file) {
-        alert("Please upload a file before proceeding!");
-        return;
-      }
-  
-      try {
-        await handleUpload();
-  
-        toast.success("Upload successful! Redirecting...", {
-          position: "top-right",
-          autoClose: 3000,
-        });
-  
-        setTimeout(() => {
-          navigate("/Display-Page", { 
-            state: { 
-              csvData, 
-              columns,
-              file,
-              preserveCharts: preservedCharts 
-            } 
-          });
-        }, 3000);
-  
-      } catch (error) {
-        console.error("Upload failed:", error);
-        toast.error("Upload failed. Please try again.");
-      }
-    } catch (error) {
-      console.error("Error:", error);
-      toast.error("Error processing data. Please try again.");
-    }
+    ]);
+
+    setVariableName("");
+    setError(null);
+  };
+
+  const handleUploadAnother = () => {
+    navigate('/upload-page', { 
+      state: { 
+        preserveVariables: savedVariables,
+        preserveCharts 
+      } 
+    });
+  };
+
+  const handleBackToDisplay = () => {
+    navigate('/Display-Page', { 
+      state: { 
+        csvData, 
+        columns,
+        file,
+        preserveCharts,
+        preserveVariables: savedVariables,
+        currentSelections
+      } 
+    });
   };
 
   return (
-    <div className="flex flex-col items-center min-h-screen bg-cover bg-center bg-uploadPage bg-gray-900 text-white font-inter">
-      <div className="ml-10 w-screen">
-        <CollapsibleSidebar />
+    <section className="bg-displayBg bg-no-repeat bg-cover bg-bottom w-full min-h-screen flex flex-col items-center">
+      <div className="flex w-full">
+        <TableSidebar />
+        <GraphSidebar />
       </div>
 
-      <div className="pb-12">
-        <div className="mt-10 py-9 bg-logo bg-no-repeat bg-cover bg-center outline-transparent w-64 rounded-xl transition-all duration-300"></div>
-      </div>
+      <div className="m-10 w-48 h-12 bg-logo bg-no-repeat bg-cover bg-center"></div>
 
-      <div className="absolute top-5 right-10 text-2xl font-bold text-amber-300 drop-shadow-[0_1.2px_1.2px_rgba(0,0,0,0.50)]">
-        Welcome, {username || "Guest"}!
-      </div>
+      <div className="w-2/3 flex justify-between items-center p-6 text-white font-inter">
+        <div className="flex flex-col space-y-6 w-3/4">
+          <div className="grid grid-cols-2 gap-4">
+            <select
+              className="w-full p-3 bg-gray-800 text-white rounded border border-gray-500 focus:outline-none focus:border-yellow-400"
+              value={selectedColumn}
+              onChange={(e) => setSelectedColumn(e.target.value)}
+            >
+              <option value="">Select Column to Sum</option>
+              {columns.map((col, index) => (
+                <option key={index} value={col}>{col}</option>
+              ))}
+            </select>
+            
+            <button
+              className="w-full p-3 bg-yellow-500 text-black font-bold rounded-lg hover:bg-yellow-600 transition duration-300"
+              onClick={calculateSum}
+            >
+              CALCULATE SUM
+            </button>
+          </div>
 
-      <div className="text-center">
-        <h1 className="text-5xl font-bold">
-          Upload your database to unlock
-          <br /> powerful insights!
-        </h1>
-        <p className="text-xl text-gray-400 mt-9 mb-16">
-          Turn Your Data into Smart Decisions
-        </p>
-      </div>
+          {sumResult !== null && (
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-gray-800 p-3 rounded border border-gray-500">
+                <p className="text-yellow-400">Sum of {selectedColumn}:</p>
+                <p className="text-2xl font-bold">{sumResult}</p>
+                <p className="text-sm text-gray-400">(Based on {filteredData.length} filtered rows)</p>
+              </div>
+              
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  className="flex-1 p-3 bg-gray-800 text-white rounded border border-gray-500 focus:outline-none focus:border-yellow-400"
+                  placeholder="Variable name"
+                  value={variableName}
+                  onChange={(e) => setVariableName(e.target.value)}
+                />
+                <button
+                  className="p-3 bg-green-500 text-white font-bold rounded-lg hover:bg-green-600 transition duration-300"
+                  onClick={saveVariable}
+                >
+                  SAVE
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
 
-      <div className="w-2/5 mt-8 text-left">
-       
-        
-        {errors.companyName && <p className="text-red-500 text-sm">{errors.companyName}</p>}
-
-        
-      </div>
+        <div className="flex flex-col w-1/4 self-end">
+          <button 
+            className="w-36 h-12 mx-10 mb-3 bg-blue-500 text-white font-bold rounded-lg hover:bg-blue-600 transition duration-300 flex items-center justify-center gap-2"
+            onClick={handleBackToDisplay}
+          >
+            <FaChartLine /> BACK TO DISPLAY
+          </button>
           
-      <div className="h-32"></div>
+          <button 
+            className="w-36 h-24 mx-10 mb-5 text-xl bg-yellow-500 text-black font-bold rounded-lg hover:bg-yellow-600 transition duration-300"
+            onClick={handleUploadAnother}
+          >
+            UPLOAD <br /> ANOTHER <br /> CSV
+          </button>
+        </div>
+      </div>
 
-      <UploadModal
-        show={showModal}
-        onClose={() => setShowModal(false)}
-        file={file}
-        columns={columns}
-        csvData={csvData}
-        rowsCount={rowsCount}
-        totalDataPoints={totalDataPoints}
-        handleConfirm={handleConfirm}
+      <div className="w-10/12 flex justify-center my-10">
+        {csvData.length > 0 ? (
+          <CsvTable 
+            columns={columns} 
+            csvData={csvData} 
+            onFilterChange={handleFilterChange} 
+          />
+        ) : (
+          <p className="text-white text-lg">No CSV data available.</p>
+        )}
+      </div>
+
+      {savedVariables.length > 0 && (
+        <div className="w-10/12 bg-gray-800 p-6 rounded-lg mb-10">
+          <h3 className="text-white text-xl font-bold mb-4">Saved Variables</h3>
+          <div className="grid grid-cols-3 gap-4">
+            {savedVariables.map((variable, index) => (
+              <div
+                key={index}
+                className="bg-gray-700 p-3 rounded border border-gray-600 cursor-pointer hover:bg-gray-600 transition"
+                onClick={() => setCalculatorInput(prev => prev + variable.name)}
+              >
+                <p className="text-yellow-400 font-bold">{variable.name}</p>
+                <p className="text-white">Value: {variable.value}</p>
+                <p className="text-gray-400 text-sm">From column: {variable.column}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <Calculator 
+        input={calculatorInput} 
+        setInput={setCalculatorInput}
+        savedVariables={savedVariables}
       />
-    <CalculatorButtons />
-    </div>
+
+      {error && (
+        <div className="w-10/12 bg-red-900 text-white p-4 rounded-lg mb-10">
+          Error: {error}
+        </div>
+      )}
+    </section>
   );
 };
 

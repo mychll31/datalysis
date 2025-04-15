@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   useReactTable,
   getCoreRowModel,
@@ -8,7 +8,7 @@ import {
   getPaginationRowModel,
 } from '@tanstack/react-table';
 
-const CsvTable = ({ columns: csvColumns, csvData }) => {
+const CsvTable = ({ columns: csvColumns, csvData, onFilterChange }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedColumn, setSelectedColumn] = useState(csvColumns[0]);
   const [filterValue, setFilterValue] = useState('');
@@ -28,52 +28,6 @@ const CsvTable = ({ columns: csvColumns, csvData }) => {
     }))
   ), [csvColumns, csvData]);
 
-  // Custom filter function that handles ranges for numeric columns
-  const customFilterFn = (row, columnId, filterValue) => {
-    const columnMeta = columns.find(col => col.accessorKey === columnId)?.meta;
-    const cellValue = row.getValue(columnId);
-    
-    if (!filterValue) return true;
-    
-    // Handle numeric range filters (e.g., "10-20", ">50", "<30")
-    if (columnMeta?.isNumeric && !isNaN(parseFloat(cellValue))) {
-      const numValue = parseFloat(cellValue);
-      
-      // Range format (e.g., "10-20")
-      if (filterValue.includes('-')) {
-        const [min, max] = filterValue.split('-').map(Number);
-        return numValue >= min && numValue <= max;
-      }
-      // Greater than (e.g., ">50")
-      else if (filterValue.startsWith('>')) {
-        const threshold = parseFloat(filterValue.substring(1));
-        return numValue > threshold;
-      }
-      // Less than (e.g., "<30")
-      else if (filterValue.startsWith('<')) {
-        const threshold = parseFloat(filterValue.substring(1));
-        return numValue < threshold;
-      }
-      // Greater than or equal (e.g., ">=50")
-      else if (filterValue.startsWith('>=')) {
-        const threshold = parseFloat(filterValue.substring(2));
-        return numValue >= threshold;
-      }
-      // Less than or equal (e.g., "<=30")
-      else if (filterValue.startsWith('<=')) {
-        const threshold = parseFloat(filterValue.substring(2));
-        return numValue <= threshold;
-      }
-    }
-    
-    // Default string contains filter for non-numeric or simple values
-    return String(cellValue).toLowerCase().includes(filterValue.toLowerCase());
-  };
-
-  const infoText = `
-      For numeric columns, use: "10-20", ">50", "<=30", etc.
-  `;
-
   // Create the table instance with pagination
   const table = useReactTable({
     data: csvData,
@@ -89,7 +43,46 @@ const CsvTable = ({ columns: csvColumns, csvData }) => {
     getSortedRowModel: getSortedRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     filterFns: {
-      customFilter: customFilterFn,
+      customFilter: (row, columnId, filterValue) => {
+        const columnMeta = columns.find(col => col.accessorKey === columnId)?.meta;
+        const cellValue = row.getValue(columnId);
+        
+        if (!filterValue) return true;
+        
+        // Handle numeric range filters (e.g., "10-20", ">50", "<30")
+        if (columnMeta?.isNumeric && !isNaN(parseFloat(cellValue))) {
+          const numValue = parseFloat(cellValue);
+          
+          // Range format (e.g., "10-20")
+          if (filterValue.includes('-')) {
+            const [min, max] = filterValue.split('-').map(Number);
+            return numValue >= min && numValue <= max;
+          }
+          // Greater than (e.g., ">50")
+          else if (filterValue.startsWith('>')) {
+            const threshold = parseFloat(filterValue.substring(1));
+            return numValue > threshold;
+          }
+          // Less than (e.g., "<30")
+          else if (filterValue.startsWith('<')) {
+            const threshold = parseFloat(filterValue.substring(1));
+            return numValue < threshold;
+          }
+          // Greater than or equal (e.g., ">=50")
+          else if (filterValue.startsWith('>=')) {
+            const threshold = parseFloat(filterValue.substring(2));
+            return numValue >= threshold;
+          }
+          // Less than or equal (e.g., "<=30")
+          else if (filterValue.startsWith('<=')) {
+            const threshold = parseFloat(filterValue.substring(2));
+            return numValue <= threshold;
+          }
+        }
+        
+        // Default string contains filter for non-numeric or simple values
+        return String(cellValue).toLowerCase().includes(filterValue.toLowerCase());
+      },
     },
     initialState: {
       pagination: {
@@ -97,6 +90,13 @@ const CsvTable = ({ columns: csvColumns, csvData }) => {
       },
     },
   });
+
+  // Call onFilterChange whenever the filtered data changes
+  useEffect(() => {
+    if (onFilterChange) {
+      onFilterChange(table.getFilteredRowModel().rows.map(row => row.original));
+    }
+  }, [table.getFilteredRowModel().rows, onFilterChange]);
 
   const addFilter = () => {
     if (selectedColumn && filterValue) {
@@ -171,6 +171,10 @@ const CsvTable = ({ columns: csvColumns, csvData }) => {
 
     return pages;
   };
+
+  const infoText = `
+      For numeric columns, use: "10-20", ">50", "<=30", etc.
+  `;
 
   return (
     <div className="w-full bg-gray-800 p-2 rounded-lg shadow-lg">
