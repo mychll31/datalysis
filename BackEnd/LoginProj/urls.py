@@ -30,4 +30,6 @@ urlpatterns = [
     path('accounts/', include('django.contrib.auth.urls')),  
 
     path("password-reset/", include("password_reset.urls")),
+    path("api/pdf/", include("pdf_generator.urls")),
+
 ] + static(settings.STATIC_URL)

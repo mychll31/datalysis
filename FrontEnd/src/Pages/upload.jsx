@@ -192,6 +192,7 @@ const UploadPage = () => {
     const formData = new FormData();
     formData.append("file", file);
 
+
     try {
         const response = await axios.post("http://127.0.0.1:8000/upload-csv/", formData);
         console.log("Upload successful", response.data);
@@ -276,7 +277,7 @@ const UploadPage = () => {
               columns,
               file,
               preserveCharts: preservedCharts 
-            } 
+            , companyName} 
           });
         }, 3000);
   

@@ -100,7 +100,8 @@ export const PieChart = ({ data, title = "Distribution" }) => {
             </svg>
             Save
           </button>
-      <div ref={chartRef} className="w-full h-full justify-end bg-white flex ">
+          
+      <div ref={chartRef} className="chart-cointainer w-full h-full justify-end bg-white flex">
         <div className='w-1/2 h-full'>
           <Pie options={options} data={chartData} className="w-full h-full" />
         </div>

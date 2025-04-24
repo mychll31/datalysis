@@ -199,7 +199,7 @@ export const RelationshipChart = ({ data }) => {
       </button>
 
       {/* Chart container with ref for capturing */}
-      <div ref={chartRef}>
+      <div ref={chartRef} className="chart-container">
         {relationship_type === 'numeric-numeric' ? (
           <Scatter 
             data={chartData} 
