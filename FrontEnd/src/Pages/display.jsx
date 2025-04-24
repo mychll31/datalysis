@@ -355,7 +355,12 @@ const Display = () => {
                                 onClick={() => {
                                   const validChartRefs = chartRefs.current.filter(ref => ref && document.body.contains(ref));
                                   if (validChartRefs.length > 0) {
-                                    handleGeneratePDF(validChartRefs, companyName);
+                                    handleGeneratePDF(validChartRefs, companyName,     {
+                                      fileName: file?.name || 'data.csv',
+                                      rowCount: csvData.length,
+                                      columnCount: columns.length,
+                                      columnNames: columns
+                                    });
                                   } else {
                                     alert("No valid charts available for PDF generation");
                                   }

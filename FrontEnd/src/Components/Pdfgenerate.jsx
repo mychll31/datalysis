@@ -15,8 +15,12 @@ const dataURLtoBlob = (dataUrl) => {
   return new Blob([u8arr], { type: mime });
 };
 
-export const handleGeneratePDF = async (chartElements, companyName) => {
-  console.log("Generating PDF with elements:", chartElements);
+export const handleGeneratePDF = async (chartElements, companyName, csvMetaData = {}) => {
+  console.log("Generating PDF with:", {
+    charts: chartElements.length,
+    csvMetaData
+  });
+  
   
   // 1. Validate input
   if (!chartElements || chartElements.length === 0) {
@@ -69,6 +73,21 @@ export const handleGeneratePDF = async (chartElements, companyName) => {
     
     formData.append('companyName', companyName);
     formData.append('chartCount', chartImages.length.toString());
+
+    //Metadata for CSV
+    formData.append('fileName', csvMetaData.fileName || 'data.csv');
+    formData.append('fileType', 'CSV');
+    formData.append('rowsCount', csvMetaData.rowCount?.toString() || '0');
+    formData.append('columnsCount', csvMetaData.columnCount?.toString() || '0');
+    formData.append('dataPointsCount', 
+      (csvMetaData.rowCount * csvMetaData.columnCount)?.toString() || '0');
+    
+    if (csvMetaData.columnNames) {
+      formData.append('columnNames', 
+        Array.isArray(csvMetaData.columnNames) 
+          ? csvMetaData.columnNames.join(',') 
+          : csvMetaData.columnNames);
+    }
 
     // 3. Send to backend
     const response = await fetch("http://localhost:8000/api/pdf/generate-report/", {
