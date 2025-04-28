@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState , useRef  } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import GraphSidebar from "../Components/SidebarForGraph";
 import TableSidebar from "../Components/SidebarForTable";
@@ -9,11 +9,13 @@ import { RelationshipChart } from "../Components/RelationshipChart";
 import { RelationshipData } from "../Components/FAKE_DATA";
 import { InsightComponent } from "../Components/Insights";
 import { FaCalculator } from "react-icons/fa";
+import { handleGeneratePDF } from "../Components/Pdfgenerate";
+
 
 const Display = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { csvData = [], columns = [], file } = location.state || {};
+  const { csvData = [], columns = [], file , companyName } = location.state || {};
   const [targetColumn1, setTargetColumn1] = useState("");
   const [targetColumn2, setTargetColumn2] = useState("");
   const [outputType, setOutputType] = useState("relationship");
@@ -22,10 +24,13 @@ const Display = () => {
   const [success, setSuccess] = useState(null);
   const [charts, setCharts] = useState([]);
   const [currentChartIndex, setCurrentChartIndex] = useState(null);
+  const chartRefs = useRef([]); //for multiple chart references
+  console.log("Company:", companyName);
 
   const handleUploadAnother = () => {
     navigate('/upload-page', { state: { preserveCharts: charts } });
   };
+
 
   const handleFormulaPage = () => {
     navigate('/Formula-Page', { 
@@ -43,6 +48,8 @@ const Display = () => {
     });
   };
 
+  
+    
   const handleApply = async () => {
     if (outputType === "pie") {
       if (!targetColumn1) {
@@ -84,7 +91,7 @@ const Display = () => {
         method: 'POST',
         body: formData,
         credentials: 'include'
-      });
+      }); 
 
       const contentType = response.headers.get('content-type');
       if (!contentType || !contentType.includes('application/json')) {
@@ -171,15 +178,21 @@ const Display = () => {
       setCurrentChartIndex(currentChartIndex - 1);
     }
   };
+  //To assign the chart references to the chartRefs array
+  const assignRef = (index, ref) => {
+    if (el) {
+      chartRefs.current[index] = ref;
+    }
+  };
+ 
+    return (
+        <section className="bg-displayBg bg-no-repeat bg-cover bg-bottom w-full min-h-screen flex flex-col items-center">
+            <div className="flex w-full">
+                <TableSidebar />
+                <GraphSidebar />
+            </div>
 
-  return (
-    <section className="bg-displayBg bg-no-repeat bg-cover bg-bottom w-full min-h-screen flex flex-col items-center">
-      <div className="flex w-full">
-        <TableSidebar />
-        <GraphSidebar />
-      </div>
-
-      <div className="m-10 w-48 h-12 bg-logo bg-no-repeat bg-cover bg-center"></div>
+            <div className="m-10 w-48 h-12 bg-logo bg-no-repeat bg-cover bg-center"></div>
 
       <div className="w-2/3 flex justify-between items-center p-6 text-white font-inter">
         <div className="flex flex-col space-y-6 w-3/4">
@@ -268,7 +281,9 @@ const Display = () => {
 
       <div className="w-10/12 mb-10">
         {charts.map((chart, index) => (
-          <div key={index} className="mb-10 relative group">
+          <div key={index} 
+          ref={el => chartRefs.current[index] = el}
+          className="mb-10 relative group">
             <div className="absolute top-0 right-0 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
               <button
                 onClick={() => handleEditChart(index)}
@@ -317,16 +332,42 @@ const Display = () => {
                   ) : (
                     <div>
                       <div className="App bg-white border-gray-900 border-8 shadow-xl flex flex-row">
-                        <RelationshipChart data={chart.data || RelationshipData} />
+                        <RelationshipChart
+                            data={chart.data || RelationshipData} 
+                        />
                         <InsightComponent data={chart.data || RelationshipData} />
+            
                       </div>
                     </div>
                   )}
+
               </>
             )}
           </div>
         ))}
       </div>
+
+      <button className="w-36 h-24 
+                                mx-10 mb-5 text-xl 
+                                bg-yellow-500 text-black 
+                                font-bold rounded-lg 
+                                hover:bg-yellow-600 transition duration-300" 
+                                onClick={() => {
+                                  const validChartRefs = chartRefs.current.filter(ref => ref && document.body.contains(ref));
+                                  if (validChartRefs.length > 0) {
+                                    handleGeneratePDF(validChartRefs, companyName,     {
+                                      fileName: file?.name || 'data.csv',
+                                      rowCount: csvData.length,
+                                      columnCount: columns.length,
+                                      columnNames: columns
+                                    });
+                                  } else {
+                                    alert("No valid charts available for PDF generation");
+                                  }
+                                }}
+                              >
+                                Generate PDF
+                              </button>
     </section>
   );
 };
