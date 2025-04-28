@@ -4,6 +4,8 @@ const Calculator = ({ input, setInput, savedVariables }) => {
   const [result, setResult] = useState("");
   const [activeCategory, setActiveCategory] = useState("Financial");
   const [showFormulas, setShowFormulas] = useState(false);
+  const [selectedFormulaName, setSelectedFormulaName] = useState("");
+
 
   const formulaCategories = {
     Financial: [
@@ -43,13 +45,7 @@ const Calculator = ({ input, setInput, savedVariables }) => {
       { name: "Capacity Utilization", formula: "(Actual_Output / Maximum_Output) * 100" },
       { name: "Order Fulfillment Time", formula: "SUM(Time_to_Fulfill) / Number_of_Orders" }
     ],
-    Statistical: [
-      { name: "Mean (Average)", formula: "SUM(Values) / COUNT(Values)" },
-      { name: "Median", formula: "MEDIAN(Values)" },
-      { name: "Standard Deviation", formula: "STDEV(Values)" },
-      { name: "Variance", formula: "VAR(Values)" },
-      { name: "Correlation Coefficient", formula: "CORREL(Array1, Array2)" }
-    ]
+
   };
 
   const handleButtonClick = (value) => {
@@ -82,29 +78,6 @@ const Calculator = ({ input, setInput, savedVariables }) => {
 
   const handleKeyDown = useCallback(
     (e) => {
-      const allowedKeys = [
-        "0",
-        "1",
-        "2",
-        "3",
-        "4",
-        "5",
-        "6",
-        "7",
-        "8",
-        "9",
-        "+",
-        "-",
-        "*",
-        "/",
-        "(",
-        ")",
-        ".",
-        "=",
-        "Enter",
-        "Backspace",
-        "Delete"
-      ];
       const key = e.key;
       if (allowedKeys.includes(key)) {
         if (key === "Enter") {
@@ -130,7 +103,7 @@ const Calculator = ({ input, setInput, savedVariables }) => {
     <div className="flex flex-row rounded-lg shadow-lg w-10/12 mb-10">
       {/* Display Area */}
       <div className="p-4 w-full bg-white rounded-lg shadow-inner">
-        <div className="text-lg h-6 mb-2">{result}</div>
+        <div className="text-lg h-6 mb-2">{selectedFormulaName}</div>
         
         {/* Formula Selection */}
         <div className="relative mb-4">
@@ -161,7 +134,10 @@ const Calculator = ({ input, setInput, savedVariables }) => {
                 {formulaCategories[activeCategory].map((item, index) => (
                   <div 
                     key={index}
-                    onClick={() => insertFormula(item.formula)}
+                    onClick={() => {
+                       insertFormula(item.formula)
+                       setSelectedFormulaName(item.name)
+                     } }
                     className="p-3 border-b border-gray-200 hover:bg-gray-100 cursor-pointer"
                   >
                     <div className="font-medium text-gray-900">{item.name}</div>
