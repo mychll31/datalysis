@@ -296,19 +296,14 @@ const handleFileChange = (e) => {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-cover bg-center bg-uploadPage bg-gray-900 text-white font-inter">
-      <div className="ml-10 w-screen">
+<div className="flex flex-col items-center justify-center min-h-screen bg-cover bg-center bg-uploadPage bg-gray-900 text-white font-inter">
+<div className="absolute top-0 left-0 ml-10 mt-5">
         <CollapsibleSidebar />
       </div>
 
       <div className="pb-12">
         <div className="mt-10 py-9 bg-logo bg-no-repeat bg-cover bg-center outline-transparent w-64 rounded-xl transition-all duration-300"></div>
       </div>
-
-      <div className="absolute top-5 right-10 text-2xl font-bold text-amber-300 drop-shadow-[0_1.2px_1.2px_rgba(0,0,0,0.50)]">
-        Welcome, {username || "Guest"}!
-      </div>
-
       <div className="text-center">
         <h1 className="text-5xl font-bold">
           Upload your database to unlock

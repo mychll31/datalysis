@@ -15,9 +15,7 @@ const homepagelinks = ({ isOpen, setIsLoginOpen }) => {
         isOpen ? "scale-100 opacity-100" : "scale-95 opacity-0 hidden"
       } md:opacity-100 md:scale-100 md:items-center md:justify-end w-full md:w-auto`}
     >
-      <p className="px-4 py-2 mt-2 text-xl text-amber-400 font-semibold rounded-lg focus:text-gray-900 focus:bg-gray-200 md:mt-0">
-        Home
-      </p>
+   
       <a
         href="#team"
         className="px-4 py-2 mt-2 text-xl font-semibold rounded-lg hover:text-gray-900 focus:text-gray-900 hover:bg-gray-200 transition-all duration-300 ease-in focus:bg-gray-200 md:mt-0 md:ml-4"
