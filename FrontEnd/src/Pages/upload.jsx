@@ -76,53 +76,58 @@ const UploadPage = () => {
     }
   }, [fileType]); 
 
-  const handleFileChange = (e) => {
-    const selectedFile = e.target.files[0];
-    setFile(selectedFile);
+const handleFileChange = (e) => {
+  const selectedFile = e.target.files[0];
+  setFile(selectedFile);
   
-    if (selectedFile) {
-      if (fileType === "csv") {
-        Papa.parse(selectedFile, {
-          complete: (result) => {
-            if (result.data.length > 0) {
-              const totalRows = result.data.length;
-              const totalCols = Object.keys(result.data[0]).length;
+  if (selectedFile) {
+    // Save the file name or file to localStorage
+    localStorage.setItem('uploadedFileName', selectedFile.name); // Save file name (can be changed to save file data if needed)
+  
+    // Logic for processing CSV and JSON files as before
+    if (fileType === "csv") {
+      Papa.parse(selectedFile, {
+        complete: (result) => {
+          if (result.data.length > 0) {
+            const totalRows = result.data.length;
+            const totalCols = Object.keys(result.data[0]).length;
 
-              setColumns(Object.keys(result.data[0]));
-              setCsvData(result.data.slice(0, totalRows));
-              setRowsCount(totalRows);
-              setTotalDataPoints(totalCols * totalRows);
-              setShowModal(true);
-            }
-          },
-          header: true,
-          skipEmptyLines: true,
-        });
-      } else if (fileType === "json") {
-        const reader = new FileReader();
-        reader.onload = (event) => {
-          try {
-            const jsonData = JSON.parse(event.target.result);
-            if (Array.isArray(jsonData)) {
-              const totalRows = jsonData.length;
-              const totalCols = Object.keys(jsonData[0]).length;
-
-              setColumns(Object.keys(jsonData[0]));
-              setCsvData(jsonData.slice(0, totalRows));
-              setRowsCount(totalRows);
-              setTotalDataPoints(totalCols * totalRows);
-              setShowModal(true);
-            } else {
-              setError("Invalid JSON file. Expected an array of objects.");
-            }
-          } catch (error) {
-            setError("Failed to parse JSON file. Please check the file format.");
+            setColumns(Object.keys(result.data[0]));
+            setCsvData(result.data.slice(0, totalRows));
+            setRowsCount(totalRows);
+            setTotalDataPoints(totalCols * totalRows);
+            setShowModal(true);
           }
-        };
-        reader.readAsText(selectedFile);
-      }
+        },
+        header: true,
+        skipEmptyLines: true,
+      });
+    } else if (fileType === "json") {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        try {
+          const jsonData = JSON.parse(event.target.result);
+          if (Array.isArray(jsonData)) {
+            const totalRows = jsonData.length;
+            const totalCols = Object.keys(jsonData[0]).length;
+
+            setColumns(Object.keys(jsonData[0]));
+            setCsvData(jsonData.slice(0, totalRows));
+            setRowsCount(totalRows);
+            setTotalDataPoints(totalCols * totalRows);
+            setShowModal(true);
+          } else {
+            setError("Invalid JSON file. Expected an array of objects.");
+          }
+        } catch (error) {
+          setError("Failed to parse JSON file. Please check the file format.");
+        }
+      };
+      reader.readAsText(selectedFile);
     }
-  };
+  }
+};
+
 
   const handleJsonLink = async (url) => {
     try {

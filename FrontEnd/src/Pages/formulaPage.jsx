@@ -1,3 +1,5 @@
+
+
 import React, { useEffect, useState } from "react";
 import NavBar from "../Components/Navbar/Navbar";
 import CollapsibleSidebar from "../Components/Sidebar";
@@ -373,3 +375,7 @@ const handleCalculatorClick = (value) => {
 };
 
 export default FormulaPage;
+
+
+
+

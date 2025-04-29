@@ -62,8 +62,9 @@ const TableSidebar = () => {
 
         <nav className="flex flex-col space-y-4">
           <SidebarItem icon={<Home />} label="Home" isOpen={isOpen} href="/homepage" />
-          <SidebarItem icon={<User />} label="Profile" isOpen={isOpen} />
+          <SidebarItem icon={<User />} label="Profile" isOpen={isOpen} href= "/Profile" />
           <SidebarItem icon={<Settings />} label="Insert Table" isOpen={isOpen} />
+          <SidebarItem icon={<Settings />} label="Formula Page" isOpen={isOpen} href="/Formula-Page" />
         </nav>
 
         <div className="mt-auto">

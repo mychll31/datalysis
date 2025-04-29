@@ -1,4 +1,3 @@
-// homenav.js
 import { useState, useEffect } from "react";
 import MobileMenuButton from "./MobileMenuButton";
 import { Sun, Moon } from "lucide-react"; // Import icons
@@ -6,10 +5,12 @@ import HomePageLinks from "./homepagelinks"; // Correct import
 
 const homenav = () => {
     const [isOpen, setIsOpen] = useState(false);
-    const [darkMode, setDarkMode] = useState(
-        localStorage.getItem("theme") === "dark"
-    );
+    const [darkMode, setDarkMode] = useState(localStorage.getItem("theme") === "dark");
     const [animating, setAnimating] = useState(false); // Controls animation
+
+    // Retrieve profile image and user info from localStorage (if available)
+    const profileImage = localStorage.getItem("profileImage") || "https://via.placeholder.com/40"; // Default to placeholder if no image
+    const user = localStorage.getItem("User");
 
     useEffect(() => {
         if (darkMode) {
@@ -40,7 +41,20 @@ const homenav = () => {
                 <div className="flex items-center space-x-4">
                     {/* Use HomePageLinks Component */}
                     <HomePageLinks isOpen={isOpen} />
-                    
+
+                    {/* Profile Image if Logged In */}
+                    {user && (
+                        <div className="relative">
+                            <img
+                                src={profileImage} // Display profile image from localStorage
+                                alt="Profile"
+                                className="h-10 w-10 rounded-full border-2 border-white object-cover cursor-pointer"
+                                // Optionally, add a link to profile page
+                                onClick={() => window.location.href = "/profile"} 
+                            />
+                        </div>
+                    )}
+
                     {/* Dark Mode Toggle Button with Smooth Animation */}
                     <button 
                         onClick={toggleDarkMode} 

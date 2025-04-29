@@ -58,8 +58,8 @@ const CollapsibleSidebar = () => {
         </button>
 
         <nav className="flex flex-col space-y-4">
-          <SidebarItem icon={<Home />} label="Home" isOpen={isOpen} href="/" />
-          <SidebarItem icon={<User />} label="Profile" isOpen={isOpen} />
+          <SidebarItem icon={<Home />} label="Home" isOpen={isOpen} href="/homepage" />
+          <SidebarItem icon={<User />} label="Profile" isOpen={isOpen} href="/profile" />
           <SidebarItem icon={<Settings />} label="Settings" isOpen={isOpen} />
         </nav>
 
