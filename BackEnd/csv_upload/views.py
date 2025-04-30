@@ -33,6 +33,7 @@ def load_data(file_obj, file_type):
             default_storage.delete(file_path)
             return df
         elif file_type == 'json':
+
             if hasattr(file_obj, 'read'):  # File upload
                 json_data = json.load(file_obj)
             else:  # JSON string
@@ -62,6 +63,7 @@ def analyze_data(request):
         return JsonResponse({'error': 'Only POST method allowed'}, status=405)
 
     try:
+       
         # 1. Validate input
         data_source = None
         file_type = None

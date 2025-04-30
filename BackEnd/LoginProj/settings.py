@@ -55,6 +55,7 @@ INSTALLED_APPS = [
     'password_reset',
     'signup',
     'csv_upload',
+    'pdf_generator',
     #Web module
     'corsheaders',
 ]
@@ -193,3 +194,11 @@ CSRF_COOKIE_HTTPONLY = False  # For JS access if needed
 
 SESSION_COOKIE_SAMESITE = 'Lax'
 SESSION_COOKIE_SECURE = False
+
+#for pdf temp files
+PDF_TEMP_ROOT = os.path.join(BASE_DIR, 'temp_pdf_files')
+Path(PDF_TEMP_ROOT).mkdir(exist_ok=True) 
+
+#for graphs temp images
+IMAGE_TEMP_ROOT = os.path.join(BASE_DIR, 'temp_images')
+Path(IMAGE_TEMP_ROOT).mkdir(exist_ok=True)
