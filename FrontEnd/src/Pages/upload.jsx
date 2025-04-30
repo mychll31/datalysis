@@ -76,53 +76,58 @@ const UploadPage = () => {
     }
   }, [fileType]); 
 
-  const handleFileChange = (e) => {
-    const selectedFile = e.target.files[0];
-    setFile(selectedFile);
+const handleFileChange = (e) => {
+  const selectedFile = e.target.files[0];
+  setFile(selectedFile);
   
-    if (selectedFile) {
-      if (fileType === "csv") {
-        Papa.parse(selectedFile, {
-          complete: (result) => {
-            if (result.data.length > 0) {
-              const totalRows = result.data.length;
-              const totalCols = Object.keys(result.data[0]).length;
+  if (selectedFile) {
+    // Save the file name or file to localStorage
+    localStorage.setItem('uploadedFileName', selectedFile.name); // Save file name (can be changed to save file data if needed)
+  
+    // Logic for processing CSV and JSON files as before
+    if (fileType === "csv") {
+      Papa.parse(selectedFile, {
+        complete: (result) => {
+          if (result.data.length > 0) {
+            const totalRows = result.data.length;
+            const totalCols = Object.keys(result.data[0]).length;
 
-              setColumns(Object.keys(result.data[0]));
-              setCsvData(result.data.slice(0, totalRows));
-              setRowsCount(totalRows);
-              setTotalDataPoints(totalCols * totalRows);
-              setShowModal(true);
-            }
-          },
-          header: true,
-          skipEmptyLines: true,
-        });
-      } else if (fileType === "json") {
-        const reader = new FileReader();
-        reader.onload = (event) => {
-          try {
-            const jsonData = JSON.parse(event.target.result);
-            if (Array.isArray(jsonData)) {
-              const totalRows = jsonData.length;
-              const totalCols = Object.keys(jsonData[0]).length;
-
-              setColumns(Object.keys(jsonData[0]));
-              setCsvData(jsonData.slice(0, totalRows));
-              setRowsCount(totalRows);
-              setTotalDataPoints(totalCols * totalRows);
-              setShowModal(true);
-            } else {
-              setError("Invalid JSON file. Expected an array of objects.");
-            }
-          } catch (error) {
-            setError("Failed to parse JSON file. Please check the file format.");
+            setColumns(Object.keys(result.data[0]));
+            setCsvData(result.data.slice(0, totalRows));
+            setRowsCount(totalRows);
+            setTotalDataPoints(totalCols * totalRows);
+            setShowModal(true);
           }
-        };
-        reader.readAsText(selectedFile);
-      }
+        },
+        header: true,
+        skipEmptyLines: true,
+      });
+    } else if (fileType === "json") {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        try {
+          const jsonData = JSON.parse(event.target.result);
+          if (Array.isArray(jsonData)) {
+            const totalRows = jsonData.length;
+            const totalCols = Object.keys(jsonData[0]).length;
+
+            setColumns(Object.keys(jsonData[0]));
+            setCsvData(jsonData.slice(0, totalRows));
+            setRowsCount(totalRows);
+            setTotalDataPoints(totalCols * totalRows);
+            setShowModal(true);
+          } else {
+            setError("Invalid JSON file. Expected an array of objects.");
+          }
+        } catch (error) {
+          setError("Failed to parse JSON file. Please check the file format.");
+        }
+      };
+      reader.readAsText(selectedFile);
     }
-  };
+  }
+};
+
 
   const handleJsonLink = async (url) => {
     try {
@@ -292,19 +297,14 @@ const UploadPage = () => {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-cover bg-center bg-uploadPage bg-gray-900 text-white font-inter">
-      <div className="ml-10 w-screen">
+<div className="flex flex-col items-center justify-center min-h-screen bg-cover bg-center bg-uploadPage bg-gray-900 text-white font-inter">
+<div className="absolute top-0 left-0 ml-10 mt-5">
         <CollapsibleSidebar />
       </div>
 
       <div className="pb-12">
         <div className="mt-10 py-9 bg-logo bg-no-repeat bg-cover bg-center outline-transparent w-64 rounded-xl transition-all duration-300"></div>
       </div>
-
-      <div className="absolute top-5 right-10 text-2xl font-bold text-amber-300 drop-shadow-[0_1.2px_1.2px_rgba(0,0,0,0.50)]">
-        Welcome, {username || "Guest"}!
-      </div>
-
       <div className="text-center">
         <h1 className="text-5xl font-bold">
           Upload your database to unlock

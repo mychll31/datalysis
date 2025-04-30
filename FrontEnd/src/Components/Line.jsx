@@ -1,13 +1,33 @@
-import {Line} from 'react-chartjs-2'
-import { Chart as ChartJs, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend} from 'chart.js';
-import { LineChartData } from './FAKE_DATA';
+import React from "react";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  Legend,
+} from "recharts";
 
-ChartJs.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
+export const LineChartComponent = ({ data, xKey, yKey, title }) => {
+  if (!data || data.length === 0) {
+    return <div className="text-center text-gray-500">No data available for Line Chart.</div>;
+  }
 
-export const LineGraph = () => {
-    const options = {};
-
-    const data = {};
-
-    return <Line options={options} data={LineChartData} />;
+  return (
+    <div className="text-black w-full">
+      <h3 className="text-center text-xl mb-4">{title}</h3>
+      <ResponsiveContainer width="100%" height={300}>
+        <LineChart data={data}>
+          <CartesianGrid strokeDasharray="3 3" />
+          <XAxis dataKey={xKey} />
+          <YAxis />
+          <Tooltip />
+          <Legend />
+          <Line type="monotone" dataKey={yKey} stroke="#8884d8" />
+        </LineChart>
+      </ResponsiveContainer>
+    </div>
+  );
 };
