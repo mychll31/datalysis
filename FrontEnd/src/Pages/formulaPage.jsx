@@ -1,17 +1,3 @@
-<<<<<<< HEAD
-
-
-import React, { useEffect, useState } from "react";
-import NavBar from "../Components/Navbar/Navbar";
-import CollapsibleSidebar from "../Components/Sidebar";
-import axios from 'axios';
-import Papa from 'papaparse';
-import UploadModal from "../Components/UploadModal";
-import { useNavigate, useLocation } from "react-router-dom";
-import { toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
-import CalculatorButtons from "../Components/CalculatorButtons";
-=======
 import React, { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import GraphSidebar from "../Components/SidebarForGraph";
@@ -19,85 +5,10 @@ import TableSidebar from "../Components/SidebarForTable";
 import CsvTable from "../Components/CsvTable";
 import { FaChartLine, FaTrash } from "react-icons/fa";
 import Calculator from "../Components/FormulaPage/CalculatorButtons";
->>>>>>> 36fd54d898e94373daf583bb2a3471ca5d1016ea
 
 const FormulaPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
-<<<<<<< HEAD
-
-  useEffect(() => {
-    if (location.state?.preserveCharts) {
-      setPreservedCharts(location.state.preserveCharts);
-    }
-  }, [location.state]);
-
-  useEffect(() => {
-    const fetchUserInfo = async () => {
-      try {
-        const response = await fetch("http://localhost:8000/api/user-info/", {
-          method: "GET",
-          credentials: "include",
-          mode: "cors",
-        });
-
-        console.log("Response Status:", response.status);
-
-        if (response.ok) {
-          const data = await response.json();
-          console.log("Fetch User Data:", data);
-          setUsername(data.username);
-        } else {
-          console.error("Failed to fetch user info. Status:", response.status);
-          const errorData = await response.json();
-          console.error("Error response:", errorData);
-        }
-      } catch (error) {
-        console.error("Error fetching user info:", error);
-      }
-    };
-
-    fetchUserInfo();
-  }, []);
-
-  useEffect(() => {
-    if (fileType) {
-      setFile(null);
-      setCsvData([]);
-      setColumns([]);
-      setRowsCount(0); 
-      setTotalDataPoints(0); 
-      setJsonLink(""); 
-      setError(""); 
-    }
-  }, [fileType]); 
-
-  const [calculatorInput, setCalculatorInput] = useState("");
-
-const handleCalculatorClick = (value) => {
-  if (value === "C") {
-    setCalculatorInput("");
-  } else if (value === "Backspace") {
-    setCalculatorInput((prev) => prev.slice(0, -1));
-  } else if (value === "=") {
-    try {
-      // Optional: Add support for "sqrt" as square root
-      let expression = calculatorInput.replace(/sqr/g, "Math.sqrt");
-      let result = eval(expression); // Use a safe math parser in production
-      setCalculatorInput(result.toString());
-    } catch (error) {
-      setCalculatorInput("Error");
-    }
-  } else {
-    setCalculatorInput((prev) => prev + value);
-  }
-};
-
-
-  const handleFileChange = (e) => {
-    const selectedFile = e.target.files[0];
-    setFile(selectedFile);
-=======
   const { 
     csvData = [], 
     columns = [], 
@@ -105,7 +16,6 @@ const handleCalculatorClick = (value) => {
     preserveCharts = [],
     currentSelections = {}
   } = location.state || {};
->>>>>>> 36fd54d898e94373daf583bb2a3471ca5d1016ea
   
   const [selectedColumn, setSelectedColumn] = useState("");
   const [calculationType, setCalculationType] = useState("sum"); // Default to sum
@@ -132,77 +42,6 @@ const handleCalculatorClick = (value) => {
         throw new Error("Selected column contains no valid numbers");
       }
   
-<<<<<<< HEAD
-      if (fileType !== "json-link" && !file) {
-        alert("Please upload a file before proceeding!");
-        return;
-      }
-  
-      try {
-        await handleUpload();
-  
-        toast.success("Upload successful! Redirecting...", {
-          position: "top-right",
-          autoClose: 3000,
-        });
-  
-        setTimeout(() => {
-          navigate("/Display-Page", { 
-            state: { 
-              csvData, 
-              columns,
-              file,
-              preserveCharts: preservedCharts 
-            } 
-          });
-        }, 3000);
-  
-      } catch (error) {
-        console.error("Upload failed:", error);
-        toast.error("Upload failed. Please try again.");
-      }
-    } catch (error) {
-      console.error("Error:", error);
-      toast.error("Error processing data. Please try again.");
-    }
-  };
-
-  return (
-    
-    <div className="flex flex-col items-center min-h-screen bg-cover bg-center bg-uploadPage bg-gray-900 text-white font-inter">
-      <div className="ml-10 w-screen">
-        <CollapsibleSidebar />
-      </div>
-
-      <div className="pb-12">
-        <div className="mt-10 py-9 bg-logo bg-no-repeat bg-cover bg-center outline-transparent w-64 rounded-xl transition-all duration-300"></div>
-      </div>
-
-      <div className="absolute top-5 right-10 text-2xl font-bold text-amber-300 drop-shadow-[0_1.2px_1.2px_rgba(0,0,0,0.50)]">
-        Welcome, {username || "Guest"}!
-      </div>
-
-      <div className="text-center">
-        <h1 className="text-5xl font-bold">
-          Upload your database to unlock
-          <br /> powerful insights!
-        </h1>
-        <p className="text-xl text-gray-400 mt-9 mb-16">
-          Turn Your Data into Smart Decisions
-        </p>
-      </div>
-
-      <div className="w-2/5 mt-8 text-left">
-       
-        
-        {errors.companyName && <p className="text-red-500 text-sm">{errors.companyName}</p>}
-
-        
-      </div>
-          
-      <div className="h-32"></div>
-      
-=======
       let calculatedValue;
       
       switch (calculationType) {
@@ -257,7 +96,6 @@ const handleCalculatorClick = (value) => {
       setResult(null);
     }
   };
->>>>>>> 36fd54d898e94373daf583bb2a3471ca5d1016ea
 
   // Function to update filtered data from CsvTable
   const handleFilterChange = (filteredData) => {
@@ -489,26 +327,8 @@ const handleCalculatorClick = (value) => {
         setInput={setCalculatorInput}
         savedVariables={savedVariables}
       />
-<<<<<<< HEAD
-      <div className="flex justify-end w-full mt-7">
-        <div className="w-1/3"> {/* Adjust width as necessary */}
-          <CalculatorButtons 
-            output={calculatorInput} 
-            onButtonClick={handleCalculatorClick} 
-          />
-        </div>
-      </div>
-    </div>
-    
-
-=======
     </section>
->>>>>>> 36fd54d898e94373daf583bb2a3471ca5d1016ea
   );
 };
 
 export default FormulaPage;
-
-
-
-
