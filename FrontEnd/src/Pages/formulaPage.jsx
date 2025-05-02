@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import GraphSidebar from "../Components/SidebarForGraph";
 import TableSidebar from "../Components/SidebarForTable";
@@ -18,13 +18,24 @@ const FormulaPage = () => {
   } = location.state || {};
   
   const [selectedColumn, setSelectedColumn] = useState("");
-  const [calculationType, setCalculationType] = useState("sum"); // Default to sum
+  const [calculationType, setCalculationType] = useState("sum");
   const [result, setResult] = useState(null);
   const [savedVariables, setSavedVariables] = useState([]);
   const [variableName, setVariableName] = useState("");
   const [error, setError] = useState(null);
   const [calculatorInput, setCalculatorInput] = useState("");
-  const [filteredData, setFilteredData] = useState(csvData); // State to hold filtered data
+  const [filteredData, setFilteredData] = useState(csvData);
+
+  // Memoized filter change handler to prevent infinite loops
+  const handleFilterChange = useCallback((newFilteredData) => {
+    setFilteredData(prev => {
+      // Deep comparison to prevent unnecessary updates
+      if (JSON.stringify(prev) !== JSON.stringify(newFilteredData)) {
+        return newFilteredData;
+      }
+      return prev;
+    });
+  }, []);
 
   const calculateStatistic = () => {
     if (!selectedColumn) {
@@ -33,7 +44,6 @@ const FormulaPage = () => {
     }
   
     try {
-      // Extract valid numbers from the selected column
       const values = filteredData
         .map(row => parseFloat(row[selectedColumn]))
         .filter(value => !isNaN(value));
@@ -95,11 +105,6 @@ const FormulaPage = () => {
       setError(error.message);
       setResult(null);
     }
-  };
-
-  // Function to update filtered data from CsvTable
-  const handleFilterChange = (filteredData) => {
-    setFilteredData(filteredData);
   };
 
   const saveVariable = () => {
@@ -166,6 +171,7 @@ const FormulaPage = () => {
   const infoText = `
   Avoid using spaces or special characters in the variable name. Only underscore ( _ ) is allowed.
   `;
+
   return (
     <section className="bg-displayBg bg-no-repeat bg-cover bg-bottom w-full min-h-screen flex flex-col items-center">
       <div className="flex w-full">
@@ -213,7 +219,6 @@ const FormulaPage = () => {
             <div className="bg-gray-800 p-3 rounded border border-gray-500">
               <p className="text-yellow-400">{getResultLabel()} of {selectedColumn}:</p>
               <p className="text-2xl font-bold">
-                {/* Only show the result if the current calculation type matches what was used to calculate it */}
                 {result.type === calculationType 
                   ? (Array.isArray(result.value) ? result.value.join(", ") : result.value)
                   : "Press CALCULATE to update"}
@@ -239,10 +244,8 @@ const FormulaPage = () => {
                 SAVE
               </button>
             </div>
-              <p  className="text-xs text-gray-400 mb-2 text-left mr-28">
-
-              </p>
-              <p  className="text-xs text-gray-400 mb-2 text-left mr-28">
+              <p className="text-xs text-gray-400 mb-2 text-left mr-28"></p>
+              <p className="text-xs text-gray-400 mb-2 text-left mr-28">
                 {infoText}
               </p>
           </div>
@@ -251,7 +254,7 @@ const FormulaPage = () => {
 
         <div className="flex flex-col w-1/4 self-end">
           <button 
-            className="w-36 h-12 mx-10 mb-3 bg-blue-500 text-white font-bold rounded-lg hover:bg-blue-600 transition duration-300 flex items-center justify-center gap-2"
+            className="w-36 h-12 mx-10 mb-3 p-3 font-bold rounded-lg bg-gray-800 hover:bg-cyan-900 text-yellow-400 transition duration-300 flex items-center justify-center gap-2"
             onClick={handleBackToDisplay}
           >
             <FaChartLine /> BACK TO DISPLAY

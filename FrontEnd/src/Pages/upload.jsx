@@ -297,8 +297,8 @@ const handleFileChange = (e) => {
   };
 
   return (
-<div className="flex flex-col items-center justify-center min-h-screen bg-cover bg-center bg-uploadPage bg-gray-900 text-white font-inter">
-<div className="absolute top-0 left-0 ml-10 mt-5">
+    <div className="flex flex-col items-center justify-center min-h-screen bg-cover bg-center bg-uploadPage bg-gray-900 text-white font-inter">
+      <div className="absolute top-0 left-0 ml-10">
         <CollapsibleSidebar />
       </div>
 

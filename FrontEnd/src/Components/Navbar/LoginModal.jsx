@@ -195,7 +195,7 @@ const LoginModal = ({ isOpen, setIsOpen, setIsSignUpOpen, setIsForgotPasswordOpe
                             }}>
                                 Forgot Password?
                             </button>
-
+                            <br />
                             <button className="text-gray-600 underline mt-3" onClick={() => setIsOpen(false)}>
                                 Close
                             </button>

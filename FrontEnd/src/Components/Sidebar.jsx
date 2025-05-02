@@ -52,9 +52,9 @@ const CollapsibleSidebar = () => {
 
   return (
     <div className="fixed z-50 left-0">
-      <div className={`text-white h-screen p-5 flex flex-col transition-all duration-300 ${isOpen ? "bg-gray-900 rounded-r-2xl bg-opacity-50 w-60" : "w-0"}`}>
+      <div className={`text-gray-800 h-screen p-5 flex flex-col transition-all duration-300 ${isOpen ? "bg-gray-300 rounded-r-2xl bg-opacity-90 w-60" : "w-0"}`}>
         <button className="text-white mb-5 focus:outline-none" onClick={() => setIsOpen(!isOpen)}>
-          <Menu className="w-9 h-9" />
+          <Menu className={`w-9 h-9 bg-gray-600 rounded-md drop-shadow-md outline transition-all duration-300 ${isOpen ? "bg-transparent outline-none text-gray-800 outline-transparent" : "w-0"} `} />
         </button>
 
         <nav className="flex flex-col space-y-4">
@@ -95,7 +95,7 @@ const CollapsibleSidebar = () => {
 
 const SidebarItem = ({ icon, label, isOpen, href, onClick }) => {
   return (
-    <div className="flex items-center space-x-4 p-2 rounded-lg cursor-pointer hover:bg-gray-700 transition-colors duration-200" onClick={onClick}>
+    <div className="flex items-center space-x-4 p-2 rounded-lg cursor-pointer hover:bg-gray-700 hover:text-white transition-colors duration-200" onClick={onClick}>
       {icon}
       {isOpen ? <a href={href} className="text-lg p-2 rounded-lg">{label}</a> : null}
     </div>
