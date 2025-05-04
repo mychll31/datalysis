@@ -133,6 +133,7 @@ def pdf_generator_view(request):
 
             story.append(dataset_table)
             story.append(Spacer(1, 24))
+
             # Summary Section
             story.append(Paragraph("Analysis Summary", heading2_style))
             story.append(Spacer(1, 12))
@@ -144,6 +145,9 @@ def pdf_generator_view(request):
             """
             story.append(Paragraph(summary_text, normal_style))
             story.append(Spacer(1, 24))
+            
+            # Area for formulas or calculations
+            
 
             # Process each chart
             for i in range(chart_count):
@@ -194,7 +198,7 @@ def pdf_generator_view(request):
                 except Exception as e:
                     print(f"Error processing chart {i}: {e}")
                     continue
-
+            
             # Build PDF with custom canvas
             doc.build(story, canvasmaker=DetailForCanvas)
             
