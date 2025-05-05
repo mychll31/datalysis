@@ -3,9 +3,6 @@ import { Menu, Home, Settings, User, LogOut, Loader } from "lucide-react";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-
-
-
 const CollapsibleSidebar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
@@ -18,14 +15,13 @@ const CollapsibleSidebar = () => {
       const response = await fetch("http://localhost:8000/api/logout/", {
         method: "POST",
         credentials: "include",
-        headers: { "Content-Type": "application/json" }, // ✅ Add headers
+        headers: { "Content-Type": "application/json" },
       });
       
-
       if (response.ok) {
         console.log("User logged out successfully");
 
-        localStorage.removeItem("username"); // ✅ Only remove relevant data
+        localStorage.removeItem("username");
 
         if (localStorage.getItem("rememberMe") !== "true") {
             localStorage.removeItem("rememberedEmail");
@@ -64,7 +60,7 @@ const CollapsibleSidebar = () => {
         </nav>
 
         <div className="mt-auto">
-          <SidebarItem icon={<LogOut />} label="Logout" isOpen={isOpen} onClick={() => setIsLogoutConfirmOpen(true)} />
+          <SidebarItem icon={<LogOut />} label="Logout" isOpen={isOpen} onClick={() => isOpen && setIsLogoutConfirmOpen(true)} />
         </div>
       </div>
 
@@ -89,17 +85,26 @@ const CollapsibleSidebar = () => {
       )}
       <ToastContainer position="top-right" autoClose={3000} />
     </div>
-    
   );
 };
 
 const SidebarItem = ({ icon, label, isOpen, href, onClick }) => {
   return (
-    <div className="flex items-center space-x-4 p-2 rounded-lg cursor-pointer hover:bg-gray-700 hover:text-white transition-colors duration-200" onClick={onClick}>
+    <div 
+      className={`flex items-center space-x-4 p-2 rounded-lg transition-colors duration-200 ${
+        isOpen ? "cursor-pointer hover:bg-gray-700 hover:text-white" : "pointer-events-none"
+      }`} 
+      onClick={isOpen ? onClick : undefined}
+    >
       {icon}
-      {isOpen ? <a href={href} className="text-lg p-2 rounded-lg">{label}</a> : null}
+      {isOpen && (
+        href ? (
+          <a href={href} className="text-lg p-2 rounded-lg">{label}</a>
+        ) : (
+          <span className="text-lg p-2 rounded-lg">{label}</span>
+        )
+      )}
     </div>
-    
   );
 };
 
