@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react"; // Import useEffect
+import { VerificationStep } from './VerificationStep';
+import { handleResendVerification } from '../../utils/verificationUtils';
 
 const SignUpModal = ({ isOpen, setIsOpen, setIsLoginOpen }) => {
     // ✅ Declare state at the top level
@@ -10,6 +12,8 @@ const SignUpModal = ({ isOpen, setIsOpen, setIsLoginOpen }) => {
     const [loading, setLoading] = useState(false);
     const [step, setSteps] = useState(1);
     const [code, setCode] = useState("");
+    const [isResending, setIsResending] = useState(false);
+
 
     const fetchCsrfToken = async () => {
         try {
@@ -89,6 +93,7 @@ const SignUpModal = ({ isOpen, setIsOpen, setIsLoginOpen }) => {
 
         setLoading(false);
     };
+
     const handleSignupCode = async (e) => {
         e.preventDefault();
 
@@ -123,7 +128,13 @@ const SignUpModal = ({ isOpen, setIsOpen, setIsLoginOpen }) => {
             }
         }
     };
-
+    const handleResendCode = async () => {
+        try {
+            await handleResendVerification(email, setIsResending);
+        } catch (error) {
+          console.log("Error resending verification code:", error);
+        }
+    };
     return !isOpen ? null : (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
             <div className="relative py-3 sm:max-w-xl sm:mx-auto">
@@ -204,36 +215,21 @@ const SignUpModal = ({ isOpen, setIsOpen, setIsLoginOpen }) => {
                     )}
 
 
-                        {/*Step 2 Just telling user that he needs to verify his account*/}
+                        {/*Step 2 Just telling user that he needs to verify his account calls the Verification Component*/}
                         {step === 2 && (
-                            <> 
-                            <h2 className="text-2xl font-semibold text-gray-800">Almost there!</h2>
+                        <VerificationStep 
+                            email={email}
+                            code={code}
+                            setCode={setCode}
+                            onSubmit={handleSignupCode}
+                            onResend={handleResendCode} 
+                            onBack={() => setStep(1)}
+                            isLoading={loading}
+                            isResending={isResending}  
+                            error={error}
+                        />
+                    )}
 
-                                <div className="py-8 space-y-6 text-gray-700">
-                                <p className="text-gray-600">An email has been sent to <strong className="text-gray-800">{email}</strong>. Please verify your email address to complete the sign up process.</p>
-                                <input
-                                            id="signup-code"
-                                            type="text"
-                                            className="peer placeholder-transparent h-10 w-full border-b-2 border-gray-300 text-gray-900 focus:outline-none focus:border-cyan-700"
-                                            placeholder="Verification Code"
-                                            value={code}
-                                            onChange={(e) => setCode(e.target.value)}
-                                        />
-                                        <label
-                                            htmlFor="signup-code"
-                                            className="absolute left-0 -top-3.5 text-gray-600 text-sm peer-placeholder-shown:top-2 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 transition-all peer-focus:-top-3.5 peer-focus:text-sm peer-focus:text-gray-600">
-                                            Email Address
-                                        </label>
-
-                                <button 
-                                    className="bg-cyan-800 text-white rounded-md px-4 py-2 w-full hover:bg-cyan-700 transition-colors"
-                                    onClick={handleSignupCode}>
-                                    Confirm
-                                </button>
-                                </div>
-                            </>
-
-                        )}
 
                         {/*Step 3 WEEWWWW*/}
                         {step === 3 && (
