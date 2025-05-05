@@ -42,7 +42,9 @@ def login_view(request):
 
                 if not user.is_active:
                         print("Account is not active")
-                        return JsonResponse({"error": "Please Activate your account"}, status=400)
+                        return JsonResponse({"error": "Please Activate your account",
+                                             "requires_verification": True,
+                                             "email": email}, status=400)
                     
             except User.DoesNotExist:
                 return JsonResponse({"error": "Invalid credentials"}, status=400)
