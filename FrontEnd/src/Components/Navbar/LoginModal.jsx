@@ -2,6 +2,9 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { VerificationStep } from './VerificationStep';
+import { handleResendVerification } from '../../utils/verificationUtils';
+
 
 const LoginModal = ({ isOpen, setIsOpen, setIsSignUpOpen, setIsForgotPasswordOpen, handleGoogleSignIn }) => {
     const [email, setEmail] = useState("");
@@ -9,6 +12,11 @@ const LoginModal = ({ isOpen, setIsOpen, setIsSignUpOpen, setIsForgotPasswordOpe
     const [rememberMe, setRememberMe] = useState(false);
     const [error, setError] = useState("");
     const [isLoggingIn, setIsLoggingIn] = useState(false);
+    const [showVerification, setShowVerification] = useState(false);
+    const [isResending, setIsResending] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const [code, setCode] = useState("");
+
 
     const navigate = useNavigate();
 
@@ -67,7 +75,6 @@ const LoginModal = ({ isOpen, setIsOpen, setIsSignUpOpen, setIsForgotPasswordOpe
                 credentials: "include",
                 body: JSON.stringify({ email, password }),
             });
-
             const data = await response.json();
 
             if (response.ok) {
@@ -93,7 +100,16 @@ const LoginModal = ({ isOpen, setIsOpen, setIsSignUpOpen, setIsForgotPasswordOpe
                     navigate("/homepage");
                 }, 3000);
             } else {
-                setError(data.error || "Login failed. Please try again.");
+                if (data.error === "Please Activate your account") {
+                    setError(
+                        <span className="text-red-500 cursor-pointer underline"
+                            onClick={() => setShowVerification(true)}>
+                            Please activate your account (Click here to verify)
+                        </span>
+                    );
+                } else {
+                    setError(data.error || "Login failed. Please try again.");
+                }
             }
         } catch (err) {
             setError("Something went wrong. Please try again.");
@@ -102,10 +118,63 @@ const LoginModal = ({ isOpen, setIsOpen, setIsSignUpOpen, setIsForgotPasswordOpe
             setIsLoggingIn(false);
         }
     };
+    // if possible let's make this reusable and move it to a utils file
+    const handleSignupCode = async (e) => {
+        e.preventDefault();
+
+        if (!code) return alert('Please enter the code.');
+        try {
+            const response = await fetch('http://localhost:8000/signup_verify/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, code })
+            });
+
+            const data = await response.json();
+            if (response.ok) {
+                alert('Code verified successfully.');
+                setShowVerification(false);
+            } else {
+                alert(data.error || 'An error occurred. Please try again.');
+            }
+
+        } catch (error) {
+            alert('Something went wrong.');
+        }
+    };
 
     const handleKeyDown = (e) => {
         if (e.key === "Enter") {
             handleSubmit();
+        }
+    };
+    // Sends the code to the backend for verification
+    const handleVerification = async () => {
+        try {
+            const response = await fetch("http://localhost:8000/signup_verify/", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email, code: verificationCode }),
+            });
+            
+            const data = await response.json();
+            
+            if (response.ok) {
+                // If verification succeeds, try logging in again
+                await handleSubmit();
+            } else {
+                setError(data.error || "Verification failed");
+            }
+        } catch (err) {
+            setError("Error verifying code");
+        }
+    };
+
+    const handleResendCode = async () => {
+        try {
+            await handleResendVerification(email, setIsResending);
+        } catch (error) {
+          console.log("Error resending verification code:", error);
         }
     };
 
@@ -204,6 +273,24 @@ const LoginModal = ({ isOpen, setIsOpen, setIsSignUpOpen, setIsForgotPasswordOpe
                 </div>
             </div>
             <ToastContainer position="top-right" autoClose={3000} />
+
+            {/* Shows the veification modal again if the user is not yet verified */}
+            {showVerification && (
+                <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-70 z-50">
+                    <div className="relative bg-white rounded-lg p-6 max-w-md w-full mx-4">
+                        <VerificationStep 
+                            email={email}
+                            code={code}
+                            setCode={setCode}
+                            onSubmit={handleSignupCode}
+                            onResend={handleResendCode} 
+                            isLoading={loading}
+                            isResending={isResending}  
+                            error={error}
+                        />
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
