@@ -76,84 +76,111 @@ const UploadPage = () => {
     }
   }, [fileType]); 
 
-const handleFileChange = (e) => {
-  const selectedFile = e.target.files[0];
-  setFile(selectedFile);
-  
-  if (selectedFile) {
-    // Save the file name or file to localStorage
-    localStorage.setItem('uploadedFileName', selectedFile.name); // Save file name (can be changed to save file data if needed)
-  
-    // Logic for processing CSV and JSON files as before
-    if (fileType === "csv") {
-      Papa.parse(selectedFile, {
-        complete: (result) => {
-          if (result.data.length > 0) {
-            const totalRows = result.data.length;
-            const totalCols = Object.keys(result.data[0]).length;
-
-            setColumns(Object.keys(result.data[0]));
-            setCsvData(result.data.slice(0, totalRows));
-            setRowsCount(totalRows);
-            setTotalDataPoints(totalCols * totalRows);
-            setShowModal(true);
-          }
-        },
-        header: true,
-        skipEmptyLines: true,
-      });
-    } else if (fileType === "json") {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        try {
-          const jsonData = JSON.parse(event.target.result);
-          if (Array.isArray(jsonData)) {
-            const totalRows = jsonData.length;
-            const totalCols = Object.keys(jsonData[0]).length;
-
-            setColumns(Object.keys(jsonData[0]));
-            setCsvData(jsonData.slice(0, totalRows));
-            setRowsCount(totalRows);
-            setTotalDataPoints(totalCols * totalRows);
-            setShowModal(true);
-          } else {
-            setError("Invalid JSON file. Expected an array of objects.");
-          }
-        } catch (error) {
-          setError("Failed to parse JSON file. Please check the file format.");
+  const isNested = (obj) => {
+    for (let key in obj) {
+      if (typeof obj[key] === 'object' && obj[key] !== null) {
+        if (Array.isArray(obj[key]) || Object.keys(obj[key]).length > 0) {
+          return true;
         }
-      };
-      reader.readAsText(selectedFile);
+      }
     }
-  }
-};
+    return false;
+  };
+
+  const handleFileChange = (e) => {
+    const selectedFile = e.target.files[0];
+    setFile(selectedFile);
+    
+    if (selectedFile) {
+      // Save the file name or file to localStorage
+      localStorage.setItem('uploadedFileName', selectedFile.name); // Save file name (can be changed to save file data if needed)
+    
+      // Logic for processing CSV and JSON files as before
+      if (fileType === "csv") {
+        Papa.parse(selectedFile, {
+          complete: (result) => {
+            if (result.data.length > 0) {
+              const totalRows = result.data.length;
+              const totalCols = Object.keys(result.data[0]).length;
+
+              setColumns(Object.keys(result.data[0]));
+              setCsvData(result.data.slice(0, totalRows));
+              setRowsCount(totalRows);
+              setTotalDataPoints(totalCols * totalRows);
+              setShowModal(true);
+            }
+          },
+          header: true,
+          skipEmptyLines: true,
+        });
+
+      } else if (fileType === "json") {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          try {
+            const jsonData = JSON.parse(event.target.result);
+
+            if (Array.isArray(jsonData)) {
+              const hasNestedData = jsonData.some(item => typeof item === 'object' && item !== null && isNested(item)
+              );
+
+            if (hasNestedData) {
+              setError("Invalid JSON file. Contains nested objects/arrays. Please upload a flat JSON structure.");
+              toast.error("Nested JSON detected. Please upload a flat structure.");
+              setFile(null);
+              setCsvData([]);
+              return;
+              }
+
+              const totalRows = jsonData.length;
+              const totalCols = Object.keys(jsonData[0]).length;
+
+              setColumns(Object.keys(jsonData[0]));
+              setCsvData(jsonData.slice(0, totalRows));
+              setRowsCount(totalRows);
+              setTotalDataPoints(totalCols * totalRows);
+              setShowModal(true);
+            } else {
+              setError("Invalid JSON file. Expected an array of objects.");
+            }
+          } catch (error) {
+            setError("Failed to parse JSON file. Please check the file format.");
+          }
+        };
+        reader.readAsText(selectedFile);
+      }
+    }
+  };
 
 
   const handleJsonLink = async (url) => {
     try {
+      if (!url.match(/^https?:\/\/.+/i)) {
+        throw new Error("Invalid URL format. Please include http:// or https://");
+      }
+
       const response = await axios.get(url);
       const jsonData = response.data;
 
-      if (!Array.isArray(jsonData)) {
-        throw new Error("Invalid JSON data. Expected an array of objects.");
-      }
+      if (Array.isArray(jsonData)) {
+        const hasNestedData = jsonData.some(item => typeof item === 'object' && item !== null && isNested(item));
 
-      if (jsonData.length === 0) {
-        throw new Error("JSON data is empty.");
-      }
+        if (hasNestedData){
+          throw new Error("JSON data contains nested objects/arrays. Please provide a flat JSON structure.");
+        }
+        const totalRows = jsonData.length;
+        const totalCols = Object.keys(jsonData[0]).length;
 
-      const totalRows = jsonData.length;
-      const totalCols = Object.keys(jsonData[0]).length;
-
-      setColumns(Object.keys(jsonData[0]));
-      setCsvData(jsonData.slice(0, totalRows));
-      setRowsCount(totalRows);
-      setTotalDataPoints(totalCols * totalRows);
-      setShowModal(true);
-      setError("");
+        setColumns(Object.keys(jsonData[0]));
+        setCsvData(jsonData.slice(0, totalRows));
+        setRowsCount(totalRows);
+        setTotalDataPoints(totalCols * totalRows);
+        setShowModal(true);
+        setError("");
+      } 
     } catch (error) {
       console.error("Error fetching JSON data:", error);
-      setError("Invalid JSON link or data format. Please check the URL and try again.");
+      setError(error.message || "Invalid JSON link or data format. Please check the URL and try again.");
       setCsvData([]);
       setColumns([]);
       setRowsCount(0);
@@ -257,6 +284,20 @@ const handleFileChange = (e) => {
     setErrors({});
   
     try {
+
+      if(fileType === "json" || fileType === "json-link"){
+        if (csvData.length > 0) {
+          const hasNestedData = csvData.some(item => 
+            typeof item === 'object' && item !== null && isNested(item)
+          );
+          
+          if (hasNestedData) {
+            toast.error("Nested JSON data detected. Please upload a flat structure.");
+            return;
+          }
+        }
+      }
+
       if (fileType === "json-link" && !csvData.length) {
         alert("Please fetch JSON data before proceeding!");
         return;
@@ -441,6 +482,7 @@ const handleFileChange = (e) => {
         {errors.contactNumber && <p className="text-red-500 text-sm">{errors.contactNumber}</p>}
   
         <button
+          disabled = {!!error}
           onClick={handleSubmit}
           className="w-full mt-6 bg-yellow-500 text-black font-bold py-3 rounded-lg hover:bg-yellow-600 transition duration-300"
         >
