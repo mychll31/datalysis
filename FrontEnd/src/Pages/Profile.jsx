@@ -114,10 +114,12 @@ const Profile = () => {
             </section>
 
             <div className="flex">
-                <CollapsibleSidebar />
 
                 <div className="flex-1">
                     <section className="w-full h-[7vh] bg-gradient-to-b from-cyan-700 to-cyan-400 dark:from-cyan-800 dark:to-cyan-600 flex items-center justify-end px-6">
+                        <div className="absolute top-0 left-0 ml-10">
+                            <CollapsibleSidebar />
+                        </div>
                         <div className="text-right flex items-center">
                             <label htmlFor="file-upload" className="cursor-pointer">
                                 <img
@@ -150,6 +152,16 @@ const Profile = () => {
                             <div className="min-w-[92vh] bg-white dark:bg-gray-800 shadow-lg rounded-xl p-8">
                                 <h2 className="text-3xl font-semibold mb-6 text-center text-gray-800 dark:text-white">
                                     User's Profile
+                                <label htmlFor="file-upload" className="flex cursor-pointer justify-center mt-4">
+                                    <img
+                                        src={profileImage}
+                                        alt="Profile"
+                                        className="h-52 w-52 rounded-full mr-2 object-cover"
+                                    />
+                                </label>
+                                <p className="text-gray-500 dark:text-gray-300 text-sm">
+                                    click to edit profille picture
+                                </p>
                                 </h2>
                                 <div className="space-y-6 text-gray-700 dark:text-gray-200">
                                     <div className="flex items-center">

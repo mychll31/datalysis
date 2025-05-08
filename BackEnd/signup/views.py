@@ -151,3 +151,19 @@ def verify_signup_code(request):
         return JsonResponse({"error": "Invalid JSON"}, status=400)
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
+
+#calls a resend email function to resend the verification code
+@csrf_exempt
+def resend_verification_code(request):
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body)
+            email = data.get("email")
+            
+            # Simply call your existing function
+            return send_email_code(request)  # The request already contains the email
+            
+        except json.JSONDecodeError:
+            return JsonResponse({"error": "Invalid JSON"}, status=400)
+    
+    return JsonResponse({"error": "POST request required"}, status=405)

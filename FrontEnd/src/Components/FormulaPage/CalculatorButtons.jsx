@@ -122,7 +122,7 @@ const Calculator = ({ input, setInput, savedVariables }) => {
                   <button
                     key={category}
                     onClick={() => setActiveCategory(category)}
-                    className={`px-4 py-2 text-sm font-medium ${activeCategory === category ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-600 hover:text-gray-800'}`}
+                    className={`px-4 py-2 text-sm font-bold ${activeCategory === category ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-600 hover:text-gray-800'}`}
                   >
                     {category}
                   </button>
@@ -140,7 +140,7 @@ const Calculator = ({ input, setInput, savedVariables }) => {
                      } }
                     className="p-3 border-b border-gray-200 hover:bg-gray-100 cursor-pointer"
                   >
-                    <div className="font-medium text-gray-900">{item.name}</div>
+                    <div className="font-bold text-gray-900">{item.name}</div>
                     <div className="text-xs text-gray-500">{item.formula}</div>
                   </div>
                 ))}
@@ -180,26 +180,26 @@ const CalculatorButtons = ({ onButtonClick }) => {
         {/* First Row - Functions */}
         <button
           onClick={() => handleClick("Sqrt(")}
-          className="bg-white hover:bg-gray-50 text-gray-800 font-medium py-4 h-16 w-16 rounded-md"
+          className="bg-gray-800 hover:bg-cyan-900 text-yellow-400 font-bold h-16 w-16 rounded-md text-5xl shadow-md "
           title="Square Root"
         >
           √
         </button>
         <button
           onClick={() => handleClick("(")}
-          className="bg-white hover:bg-gray-50 text-gray-800 font-medium h-16 w-16 py-4 rounded-md text-xl"
+          className="bg-gray-800 hover:bg-cyan-900 text-yellow-400 font-bold h-16 w-16 pb-2 pr-2 rounded-md text-5xl shadow-md"
         >
           (
         </button>
         <button
           onClick={() => handleClick(")")}
-          className="bg-white hover:bg-gray-50 text-gray-800 font-medium py-4 h-16 w-16 rounded-md text-xl"
+          className="bg-gray-800 hover:bg-cyan-900 text-yellow-400 font-bold pb-2 pl-2 h-16 w-16 rounded-md text-5xl shadow-md"
         >
           )
         </button>
         <button
           onClick={() => handleClick("C")}
-          className="bg-blue-500 hover:bg-blue-600 text-white font-medium py-4 h-16 w-16 rounded-md text-xl"
+          className="bg-gray-800 hover:bg-cyan-900 text-yellow-400 font-bold pb-2 h-16 w-16 rounded-md text-5xl shadow-md"
         >
           C
         </button>
@@ -207,25 +207,25 @@ const CalculatorButtons = ({ onButtonClick }) => {
         {/* Second Row */}
         <button
           onClick={() => handleClick("7")}
-          className="bg-white hover:bg-gray-50 text-gray-800 font-medium py-4 h-16 w-16 rounded-md text-xl"
+          className="bg-white hover:bg-gray-50 text-gray-800 font-bold pb-2 h-16 w-16 rounded-md text-5xl shadow-md"
         >
           7
         </button>
         <button
           onClick={() => handleClick("8")}
-          className="bg-white hover:bg-gray-50 text-gray-800 font-medium py-4 h-16 w-16 rounded-md text-xl"
+          className="bg-white hover:bg-gray-50 text-gray-800 font-bold pb-2 h-16 w-16 rounded-md text-5xl shadow-md"
         >
           8
         </button>
         <button
           onClick={() => handleClick("9")}
-          className="bg-white hover:bg-gray-50 text-gray-800 font-medium py-4 h-16 w-16 rounded-md text-xl"
+          className="bg-white hover:bg-gray-50 text-gray-800 font-bold pb-2 h-16 w-16 rounded-md text-5xl shadow-md"
         >
           9
         </button>
         <button
           onClick={() => handleClick("+")}
-          className="bg-blue-500 hover:bg-blue-600 text-white font-medium py-4 h-16 w-16 rounded-md text-xl"
+          className="bg-gray-800 hover:bg-cyan-900 text-yellow-400 font-bold pb-2 h-16 w-16 rounded-md text-5xl shadow-md"
         >
           +
         </button>
@@ -233,25 +233,25 @@ const CalculatorButtons = ({ onButtonClick }) => {
         {/* Third Row */}
         <button
           onClick={() => handleClick("4")}
-          className="bg-white hover:bg-gray-50 text-gray-800 font-medium py-4 h-16 w-16 rounded-md text-xl"
+          className="bg-white hover:bg-gray-50 text-gray-800 font-bold pb-2 h-16 w-16 rounded-md text-5xl shadow-md"
         >
           4
         </button>
         <button
           onClick={() => handleClick("5")}
-          className="bg-white hover:bg-gray-50 text-gray-800 font-medium py-4 h-16 w-16 rounded-md text-xl"
+          className="bg-white hover:bg-gray-50 text-gray-800 font-bold pb-2 h-16 w-16 rounded-md text-5xl shadow-md"
         >
           5
         </button>
         <button
           onClick={() => handleClick("6")}
-          className="bg-white hover:bg-gray-50 text-gray-800 font-medium py-4 h-16 w-16 rounded-md text-xl"
+          className="bg-white hover:bg-gray-50 text-gray-800 font-bold pb-2 h-16 w-16 rounded-md text-5xl shadow-md"
         >
           6
         </button>
         <button
           onClick={() => handleClick("-")}
-          className="bg-blue-500 hover:bg-blue-600 text-white font-medium py-4 h-16 w-16 rounded-md text-xl"
+          className="bg-gray-800 hover:bg-cyan-900 text-yellow-400 font-bold pb-2 h-16 w-16 rounded-md text-5xl shadow-md"
         >
           -
         </button>
@@ -259,25 +259,25 @@ const CalculatorButtons = ({ onButtonClick }) => {
         {/* Fourth Row */}
         <button
           onClick={() => handleClick("1")}
-          className="bg-white hover:bg-gray-50 text-gray-800 font-medium py-4 h-16 w-16 rounded-md text-xl"
+          className="bg-white hover:bg-gray-50 text-gray-800 font-bold pb-2 h-16 w-16 rounded-md text-5xl shadow-md"
         >
           1
         </button>
         <button
           onClick={() => handleClick("2")}
-          className="bg-white hover:bg-gray-50 text-gray-800 font-medium py-4 h-16 w-16 rounded-md text-xl"
+          className="bg-white hover:bg-gray-50 text-gray-800 font-bold pb-2 h-16 w-16 rounded-md text-5xl shadow-md"
         >
           2
         </button>
         <button
           onClick={() => handleClick("3")}
-          className="bg-white hover:bg-gray-50 text-gray-800 font-medium py-4 h-16 w-16 rounded-md text-xl"
+          className="bg-white hover:bg-gray-50 text-gray-800 font-bold pb-2 h-16 w-16 rounded-md text-5xl shadow-md"
         >
           3
         </button>
         <button
           onClick={() => handleClick("*")}
-          className="bg-blue-500 hover:bg-blue-600 text-white font-medium py-4 h-16 w-16 rounded-md text-xl"
+          className="bg-gray-800 hover:bg-cyan-900 text-yellow-400 font-bold pb-2 h-16 w-16 rounded-md text-5xl shadow-md"
         >
           ×
         </button>
@@ -285,25 +285,25 @@ const CalculatorButtons = ({ onButtonClick }) => {
         {/* Fifth Row */}
         <button
           onClick={() => handleClick("%")}
-          className="bg-white hover:bg-gray-50 text-gray-800 font-medium py-4 h-16 w-16 rounded-md text-xl"
+          className="bg-gray-800 hover:bg-cyan-900 text-yellow-400 font-bold pb-2 h-16 w-16 rounded-md text-5xl shadow-md"
         >
           %
         </button>
         <button
           onClick={() => handleClick("0")}
-          className="bg-white hover:bg-gray-50 text-gray-800 font-medium py-4 h-16 w-16 rounded-md text-xl"
+          className="bg-white hover:bg-gray-50 text-gray-800 font-bold pb-2 h-16 w-16 rounded-md text-5xl shadow-md"
         >
           0
         </button>
         <button
           onClick={() => handleClick(".")}
-          className="bg-white hover:bg-gray-50 text-gray-800 font-medium py-4 h-16 w-16 rounded-md text-xl"
+          className="bg-white hover:bg-gray-50 text-gray-800 font-bold pb-2 h-16 w-16 rounded-md text-5xl shadow-md"
         >
           .
         </button>
         <button
           onClick={() => handleClick("/")}
-          className="bg-blue-500 hover:bg-blue-600 text-white font-medium py-4 h-16 w-16 rounded-md text-xl"
+          className="bg-gray-800 hover:bg-cyan-900 text-yellow-400 font-bold pb-2 h-16 w-16 rounded-md text-5xl shadow-md"
         >
           /
         </button>
@@ -312,14 +312,14 @@ const CalculatorButtons = ({ onButtonClick }) => {
       <div className="grid grid-rows-2 gap-2 p-2 rounded-lg">
         <button
           onClick={() => handleClick("Backspace")}
-          className="bg-green-500 hover:bg-green-600 text-white font-medium py-4 h-16 w-16 rounded-md text-xl"
+          className="bg-gray-800 hover:bg-cyan-900 text-yellow-400 font-bold pb-2 h-16 w-16 rounded-md text-5xl shadow-md"
         >
           ⌫
         </button>
         <div className="grid items-end">
           <button
             onClick={() => handleClick("=")}
-            className="bg-green-500 hover:bg-green-600 text-white font-medium py-4 w-16 h-[137px] rounded-md text-xl"
+            className="bg-yellow-500 hover:bg-yellow-600 text-gray-800 font-bold pb-2 w-16 h-[137px] rounded-md text-5xl shadow-md"
           >
             =
           </button>
