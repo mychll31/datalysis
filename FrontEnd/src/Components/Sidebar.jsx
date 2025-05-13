@@ -3,9 +3,6 @@ import { Menu, Home, Settings, User, LogOut, Loader } from "lucide-react";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-
-
-
 const CollapsibleSidebar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
@@ -18,14 +15,13 @@ const CollapsibleSidebar = () => {
       const response = await fetch("http://localhost:8000/api/logout/", {
         method: "POST",
         credentials: "include",
-        headers: { "Content-Type": "application/json" }, // ✅ Add headers
+        headers: { "Content-Type": "application/json" },
       });
       
-
       if (response.ok) {
         console.log("User logged out successfully");
 
-        localStorage.removeItem("username"); // ✅ Only remove relevant data
+        localStorage.removeItem("username");
 
         if (localStorage.getItem("rememberMe") !== "true") {
             localStorage.removeItem("rememberedEmail");
@@ -52,19 +48,19 @@ const CollapsibleSidebar = () => {
 
   return (
     <div className="fixed z-50 left-0">
-      <div className={`text-white h-screen p-5 flex flex-col transition-all duration-300 ${isOpen ? "bg-gray-900 rounded-r-2xl bg-opacity-50 w-60" : "w-0"}`}>
+      <div className={`text-gray-800 h-screen p-5 flex flex-col transition-all duration-300 ${isOpen ? "bg-gray-300 rounded-r-2xl bg-opacity-90 w-60" : "w-0"}`}>
         <button className="text-white mb-5 focus:outline-none" onClick={() => setIsOpen(!isOpen)}>
-          <Menu className="w-9 h-9" />
+          <Menu className={`w-9 h-9 bg-gray-600 rounded-md drop-shadow-md outline transition-all duration-300 ${isOpen ? "bg-transparent outline-none text-gray-800 outline-transparent" : "w-0"} `} />
         </button>
 
         <nav className="flex flex-col space-y-4">
-          <SidebarItem icon={<Home />} label="Home" isOpen={isOpen} href="/" />
-          <SidebarItem icon={<User />} label="Profile" isOpen={isOpen} />
+          <SidebarItem icon={<Home />} label="Home" isOpen={isOpen} href="/homepage" />
+          <SidebarItem icon={<User />} label="Profile" isOpen={isOpen} href="/profile" />
           <SidebarItem icon={<Settings />} label="Settings" isOpen={isOpen} />
         </nav>
 
         <div className="mt-auto">
-          <SidebarItem icon={<LogOut />} label="Logout" isOpen={isOpen} onClick={() => setIsLogoutConfirmOpen(true)} />
+          <SidebarItem icon={<LogOut />} label="Logout" isOpen={isOpen} onClick={() => isOpen && setIsLogoutConfirmOpen(true)} />
         </div>
       </div>
 
@@ -89,17 +85,26 @@ const CollapsibleSidebar = () => {
       )}
       <ToastContainer position="top-right" autoClose={3000} />
     </div>
-    
   );
 };
 
 const SidebarItem = ({ icon, label, isOpen, href, onClick }) => {
   return (
-    <div className="flex items-center space-x-4 p-2 rounded-lg cursor-pointer hover:bg-gray-700 transition-colors duration-200" onClick={onClick}>
+    <div 
+      className={`flex items-center space-x-4 p-2 rounded-lg transition-colors duration-200 ${
+        isOpen ? "cursor-pointer hover:bg-gray-700 hover:text-white" : "pointer-events-none"
+      }`} 
+      onClick={isOpen ? onClick : undefined}
+    >
       {icon}
-      {isOpen ? <a href={href} className="text-lg p-2 rounded-lg">{label}</a> : null}
+      {isOpen && (
+        href ? (
+          <a href={href} className="text-lg p-2 rounded-lg">{label}</a>
+        ) : (
+          <span className="text-lg p-2 rounded-lg">{label}</span>
+        )
+      )}
     </div>
-    
   );
 };
 

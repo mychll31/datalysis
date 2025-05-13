@@ -39,6 +39,7 @@ def load_data(file_obj, file_type):
             else:  # JSON string
                 json_data = json.loads(file_obj)
             return pd.DataFrame(json_data)
+            
         return None
     except Exception as e:
         logging.error(f"Error loading {file_type} data: {str(e)}")

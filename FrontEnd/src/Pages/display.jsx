@@ -253,7 +253,7 @@ const Display = () => {
              currentChartIndex !== null ? "UPDATE CHART" : "ANALYZE"}
           </button>
           <button 
-            className="w-36 h-12 mx-10 mb-3 bg-purple-500 text-white font-bold rounded-lg hover:bg-purple-600 transition duration-300 flex items-center justify-center gap-2"
+            className="w-36 p-3 h-12 mx-10 mb-3 font-bold rounded-lg bg-gray-800 hover:bg-cyan-900 text-yellow-400 transition duration-300 flex items-center justify-center gap-2"
             onClick={handleFormulaPage}
           >
             <FaCalculator /> FORMULA PAGE

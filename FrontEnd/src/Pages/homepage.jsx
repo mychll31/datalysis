@@ -20,7 +20,7 @@ const Homepage = () => {
   }, [darkMode]);
 
   return (
-    <div className={`transition-colors duration-300 ${darkMode ? "dark" : ""}`}>
+    <div className={`transition-colors duration-300 dark:bg-gray-950 ${darkMode ? "dark" : ""}`}>
       {/* Banner Section */}
       <section className="bg-bannerImg bg-no-repeat bg-cover bg-bottom w-full h-screen dark:bg-gray-950">
         {/* NavBar Component */}

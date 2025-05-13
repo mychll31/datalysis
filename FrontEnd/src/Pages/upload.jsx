@@ -76,11 +76,26 @@ const UploadPage = () => {
     }
   }, [fileType]); 
 
+  const isNested = (obj) => {
+    for (let key in obj) {
+      if (typeof obj[key] === 'object' && obj[key] !== null) {
+        if (Array.isArray(obj[key]) || Object.keys(obj[key]).length > 0) {
+          return true;
+        }
+      }
+    }
+    return false;
+  };
+
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
     setFile(selectedFile);
-  
+    
     if (selectedFile) {
+      // Save the file name or file to localStorage
+      localStorage.setItem('uploadedFileName', selectedFile.name); // Save file name (can be changed to save file data if needed)
+    
+      // Logic for processing CSV and JSON files as before
       if (fileType === "csv") {
         Papa.parse(selectedFile, {
           complete: (result) => {
@@ -98,12 +113,25 @@ const UploadPage = () => {
           header: true,
           skipEmptyLines: true,
         });
+
       } else if (fileType === "json") {
         const reader = new FileReader();
         reader.onload = (event) => {
           try {
             const jsonData = JSON.parse(event.target.result);
+
             if (Array.isArray(jsonData)) {
+              const hasNestedData = jsonData.some(item => typeof item === 'object' && item !== null && isNested(item)
+              );
+
+            if (hasNestedData) {
+              setError("Invalid JSON file. Contains nested objects/arrays. Please upload a flat JSON structure.");
+              toast.error("Nested JSON detected. Please upload a flat structure.");
+              setFile(null);
+              setCsvData([]);
+              return;
+              }
+
               const totalRows = jsonData.length;
               const totalCols = Object.keys(jsonData[0]).length;
 
@@ -124,31 +152,35 @@ const UploadPage = () => {
     }
   };
 
+
   const handleJsonLink = async (url) => {
     try {
+      if (!url.match(/^https?:\/\/.+/i)) {
+        throw new Error("Invalid URL format. Please include http:// or https://");
+      }
+
       const response = await axios.get(url);
       const jsonData = response.data;
 
-      if (!Array.isArray(jsonData)) {
-        throw new Error("Invalid JSON data. Expected an array of objects.");
-      }
+      if (Array.isArray(jsonData)) {
+        const hasNestedData = jsonData.some(item => typeof item === 'object' && item !== null && isNested(item));
 
-      if (jsonData.length === 0) {
-        throw new Error("JSON data is empty.");
-      }
+        if (hasNestedData){
+          throw new Error("JSON data contains nested objects/arrays. Please provide a flat JSON structure.");
+        }
+        const totalRows = jsonData.length;
+        const totalCols = Object.keys(jsonData[0]).length;
 
-      const totalRows = jsonData.length;
-      const totalCols = Object.keys(jsonData[0]).length;
-
-      setColumns(Object.keys(jsonData[0]));
-      setCsvData(jsonData.slice(0, totalRows));
-      setRowsCount(totalRows);
-      setTotalDataPoints(totalCols * totalRows);
-      setShowModal(true);
-      setError("");
+        setColumns(Object.keys(jsonData[0]));
+        setCsvData(jsonData.slice(0, totalRows));
+        setRowsCount(totalRows);
+        setTotalDataPoints(totalCols * totalRows);
+        setShowModal(true);
+        setError("");
+      } 
     } catch (error) {
       console.error("Error fetching JSON data:", error);
-      setError("Invalid JSON link or data format. Please check the URL and try again.");
+      setError(error.message || "Invalid JSON link or data format. Please check the URL and try again.");
       setCsvData([]);
       setColumns([]);
       setRowsCount(0);
@@ -252,6 +284,20 @@ const UploadPage = () => {
     setErrors({});
   
     try {
+
+      if(fileType === "json" || fileType === "json-link"){
+        if (csvData.length > 0) {
+          const hasNestedData = csvData.some(item => 
+            typeof item === 'object' && item !== null && isNested(item)
+          );
+          
+          if (hasNestedData) {
+            toast.error("Nested JSON data detected. Please upload a flat structure.");
+            return;
+          }
+        }
+      }
+
       if (fileType === "json-link" && !csvData.length) {
         alert("Please fetch JSON data before proceeding!");
         return;
@@ -293,18 +339,13 @@ const UploadPage = () => {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-cover bg-center bg-uploadPage bg-gray-900 text-white font-inter">
-      <div className="ml-10 w-screen">
+      <div className="absolute top-0 left-0 ml-10">
         <CollapsibleSidebar />
       </div>
 
       <div className="pb-12">
         <div className="mt-10 py-9 bg-logo bg-no-repeat bg-cover bg-center outline-transparent w-64 rounded-xl transition-all duration-300"></div>
       </div>
-
-      <div className="absolute top-5 right-10 text-2xl font-bold text-amber-300 drop-shadow-[0_1.2px_1.2px_rgba(0,0,0,0.50)]">
-        Welcome, {username || "Guest"}!
-      </div>
-
       <div className="text-center">
         <h1 className="text-5xl font-bold">
           Upload your database to unlock
@@ -441,6 +482,7 @@ const UploadPage = () => {
         {errors.contactNumber && <p className="text-red-500 text-sm">{errors.contactNumber}</p>}
   
         <button
+          disabled = {!!error}
           onClick={handleSubmit}
           className="w-full mt-6 bg-yellow-500 text-black font-bold py-3 rounded-lg hover:bg-yellow-600 transition duration-300"
         >
