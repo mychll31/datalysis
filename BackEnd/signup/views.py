@@ -160,8 +160,7 @@ def resend_verification_code(request):
             data = json.loads(request.body)
             email = data.get("email")
             
-            # Simply call your existing function
-            return send_email_code(request)  # The request already contains the email
+            return send_email_code(request) 
             
         except json.JSONDecodeError:
             return JsonResponse({"error": "Invalid JSON"}, status=400)

@@ -203,7 +203,7 @@ const FormulaPage = () => {
       } 
     });
   };
-
+  
   // Delete handlers
   const deleteVariable = (indexToDelete) => {
     setSavedVariables(prev => prev.filter((_, index) => index !== indexToDelete));
@@ -226,6 +226,88 @@ const FormulaPage = () => {
 
   const infoText = "Avoid using spaces or special characters in the variable name. Only underscore ( _ ) is allowed.";
   
+  // for generating PDF report
+  const generateFormulaPDF = async () => {
+    console.log("=== STARTING PDF GENERATION ===");
+    console.log("Saved Calculations:", savedCalculations);
+    console.log("Saved Variables:", savedVariables);
+  
+    if (savedCalculations.length === 0 && savedVariables.length === 0) {
+      setError("No calculations or variables to export");
+      return;
+    }
+  
+    try {
+      // Create FormData object
+      const formData = new FormData();
+      
+      // Append calculations data
+      formData.append('calculations', JSON.stringify(savedCalculations));
+      
+      // Append variables data
+      formData.append('variables', JSON.stringify(savedVariables));
+      
+      // Append company name (use file name if available)
+      formData.append('companyName', file?.name || "Data Analysis");
+      
+      // Explicitly set chartCount to 0 since we're not sending charts
+      formData.append('chartCount', '0');
+      
+      // Append CSV metadata if available
+      if (file) {
+        formData.append('fileName', file.name);
+        formData.append('fileType', 'CSV');
+        formData.append('rowsCount', csvData.length.toString());
+        formData.append('columnsCount', columns.length.toString());
+        formData.append('dataPointsCount', (csvData.length * columns.length).toString());
+        
+        if (columns.length > 0) {
+          formData.append('columnNames', columns.join(','));
+        }
+      }
+  
+      // Debug: Log what we're sending
+      console.log("FormData contents:");
+      for (let [key, value] of formData.entries()) {
+        console.log(key, value);
+      }
+  
+      // Send to backend
+      const response = await fetch("http://localhost:8000/api/pdf/generate-report/", {
+        method: "POST",
+        body: formData
+      });
+  
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error("Backend error:", errorData);
+        throw new Error(errorData.error || "PDF generation failed");
+      }
+  
+      // Handle the PDF download
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const filename = `${file?.name.replace(/\s+/g, '_') || 'calculations'}_report.pdf`;
+      
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      
+      // Cleanup
+      setTimeout(() => {
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      }, 100);
+  
+      console.log("PDF generated successfully!");
+  
+    } catch (error) {
+      console.error("Error:", error);
+      setError("PDF Generation Error: " + error.message);
+    }
+  };
   // Main component render
   return (
     <section className="bg-displayBg bg-no-repeat bg-cover bg-bottom w-full min-h-screen flex flex-col items-center">
@@ -450,6 +532,20 @@ const FormulaPage = () => {
             </div>
           </div>
         )}
+
+        <button className="w-36 h-24 
+                                mx-10 mb-5 text-xl 
+                                bg-yellow-500 text-black 
+                                font-bold rounded-lg 
+                                hover:bg-yellow-600 transition duration-300"
+                                onClick={generateFormulaPDF}
+                                disabled={savedCalculations.length === 0}>  
+                                {savedCalculations.length > 0 ? (
+                                    <>GENERATE<br />PDF</>
+                                  ) : (
+                                    <>NO<br />CALCULATIONS</>
+                                  )}
+                                </button>
       </div>
     </section>
   );
