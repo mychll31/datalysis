@@ -106,7 +106,112 @@ const FormulaPage = () => {
       } 
     });
   };
+  
+  // Delete handlers
+  const deleteVariable = (indexToDelete) => {
+    setSavedVariables(prev => prev.filter((_, index) => index !== indexToDelete));
+  };
 
+  const deleteCalculation = (indexToDelete) => {
+    setSavedCalculations(prev => prev.filter((_, index) => index !== indexToDelete));
+  };
+
+  // Helper to get display label for calculation type
+  const getResultLabel = () => {
+    switch (calculationType) {
+      case "sum": return "Sum";
+      case "mean": return "Mean";
+      case "median": return "Median";
+      case "mode": return "Mode";
+      default: return "Result";
+    }
+  };
+
+  const infoText = "Avoid using spaces or special characters in the variable name. Only underscore ( _ ) is allowed.";
+  
+  // for generating PDF report
+  const generateFormulaPDF = async () => {
+    console.log("=== STARTING PDF GENERATION ===");
+    console.log("Saved Calculations:", savedCalculations);
+    console.log("Saved Variables:", savedVariables);
+  
+    if (savedCalculations.length === 0 && savedVariables.length === 0) {
+      setError("No calculations or variables to export");
+      return;
+    }
+  
+    try {
+      // Create FormData object
+      const formData = new FormData();
+      
+      // Append calculations data
+      formData.append('calculations', JSON.stringify(savedCalculations));
+      
+      // Append variables data
+      formData.append('variables', JSON.stringify(savedVariables));
+      
+      // Append company name (use file name if available)
+      formData.append('companyName', file?.name || "Data Analysis");
+      
+      // Explicitly set chartCount to 0 since we're not sending charts
+      formData.append('chartCount', '0');
+      
+      // Append CSV metadata if available
+      if (file) {
+        formData.append('fileName', file.name);
+        formData.append('fileType', 'CSV');
+        formData.append('rowsCount', csvData.length.toString());
+        formData.append('columnsCount', columns.length.toString());
+        formData.append('dataPointsCount', (csvData.length * columns.length).toString());
+        
+        if (columns.length > 0) {
+          formData.append('columnNames', columns.join(','));
+        }
+      }
+  
+      // Debug: Log what we're sending
+      console.log("FormData contents:");
+      for (let [key, value] of formData.entries()) {
+        console.log(key, value);
+      }
+  
+      // Send to backend
+      const response = await fetch("http://localhost:8000/api/pdf/generate-report/", {
+        method: "POST",
+        body: formData
+      });
+  
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error("Backend error:", errorData);
+        throw new Error(errorData.error || "PDF generation failed");
+      }
+  
+      // Handle the PDF download
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const filename = `${file?.name.replace(/\s+/g, '_') || 'calculations'}_report.pdf`;
+      
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      
+      // Cleanup
+      setTimeout(() => {
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      }, 100);
+  
+      console.log("PDF generated successfully!");
+  
+    } catch (error) {
+      console.error("Error:", error);
+      setError("PDF Generation Error: " + error.message);
+    }
+  };
+  // Main component render
   return (
     <section className="bg-displayBg bg-no-repeat bg-cover bg-bottom w-full min-h-screen flex flex-col items-center">
       <div className="flex w-full">
@@ -219,11 +324,72 @@ const FormulaPage = () => {
         savedVariables={savedVariables}
       />
 
-      {error && (
-        <div className="w-10/12 bg-red-900 text-white p-4 rounded-lg mb-10">
-          Error: {error}
-        </div>
-      )}
+      {/* Calculation history section */}
+      <div className="w-10/12 flex flex-col items-end my-4">
+        <button
+          className="p-3 bg-green-500 text-white font-bold rounded-lg hover:bg-green-600 transition duration-300 mb-3"
+          onClick={saveCalculation}
+        >
+          SAVE CALCULATION
+        </button>
+        
+        {/* Calculation history list */}
+        {savedCalculations.length > 0 && (
+          <div className="w-full bg-gray-800/90 p-4 rounded-lg border border-gray-700">
+            <h3 className="text-white text-lg font-bold mb-3 flex items-center">
+              <svg className="w-5 h-5 mr-2 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+              </svg>
+              Calculation History
+            </h3>
+            <div className="space-y-3">
+              {savedCalculations.map((calculation, index) => (
+                <div 
+                  key={index} 
+                  className="bg-gray-700/50 p-3 rounded-lg hover:bg-gray-700 transition flex justify-between items-start"
+                >
+                  <div className="flex-1 min-w-0">
+                    <p className="text-yellow-400 truncate font-mono text-sm sm:text-base">
+                      {calculation.formula}
+                    </p>
+                    <p className="text-white font-mono mt-1 text-sm sm:text-base">
+                      = {typeof calculation.result === 'number' 
+                          ? calculation.result.toLocaleString(undefined, {
+                              maximumFractionDigits: 2
+                            })
+                          : calculation.result}
+                    </p>
+                    <p className="text-gray-400 text-xs mt-1">
+                      {calculation.timestamp}
+                    </p>
+                  </div>
+                  <button
+                    className="text-red-400 hover:text-red-300 ml-3 p-1"
+                    onClick={() => deleteCalculation(index)}
+                    title="Delete calculation"
+                  >
+                    <FaTrash size={14} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <button className="w-36 h-24 
+                                mx-10 mb-5 text-xl 
+                                bg-yellow-500 text-black 
+                                font-bold rounded-lg 
+                                hover:bg-yellow-600 transition duration-300"
+                                onClick={generateFormulaPDF}
+                                disabled={savedCalculations.length === 0}>  
+                                {savedCalculations.length > 0 ? (
+                                    <>GENERATE<br />PDF</>
+                                  ) : (
+                                    <>NO<br />CALCULATIONS</>
+                                  )}
+                                </button>
+      </div>
     </section>
   );
 };
