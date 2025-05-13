@@ -1,6 +1,9 @@
 import React from "react";
+import JargonModal from "./JargonModal";
+import { useState, useEffect } from "react";
 
 // Enhanced helper functions with error handling and additional metrics
+
 const computeStatistics = (arr) => {
   if (!Array.isArray(arr) || arr.length === 0) return {};
   
@@ -259,41 +262,45 @@ export const InsightComponent = ({ data = {}, config = {} }) => {
   };
 
   const insightsList = generateInsights();
-
+  const [isModalOpen, setIsModalOpen] = useState(false);
   return (
-    <div className="bg-gray-50 p-4 rounded-lg shadow-sm border border-gray-200 mt-4">
-      <h3 className="text-lg font-semibold mb-3 text-gray-800 flex items-center">
-        <svg className="w-5 h-5 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-        Data Insights
-      </h3>
-      
+    <div className="bg-gray-50 p-4 rounded-lg shadow-sm border border-gray-200 mt-4 relative">
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-lg font-semibold text-gray-800 flex items-center">
+        <button
+          onClick={() => setIsModalOpen(true)}
+          className="text-gray-500 hover:text-gray-700 focus:outline-none"
+          aria-label="Show jargon definitions"
+        >
+          <svg
+            className="w-5 h-5 mr-2 text-blue-500 hover:text-white transition-all hover:bg-blue-500 rounded-full"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          
+        </button>
+          Data Insights
+        </h3>
+        <button
+          onClick={() => setIsModalOpen(true)}
+          className="text-gray-500 hover:text-gray-700 focus:outline-none"
+          aria-label="Show jargon definitions"
+        >
+          
+        </button>
+      </div>
+
       {insightsList.length > 0 ? (
         <ul className="space-y-2">
-          {insightsList.map((insight, index) => {
-            const isRecommendation = insight.startsWith("-") || insight.startsWith("Recommendation");
-            const isWarning = insight.includes("Warning") || insight.includes("missing") || insight.includes("outlier");
-            
-            return (
-              <li 
-                key={index} 
-                className={`text-sm flex items-start ${
-                  isRecommendation ? "text-blue-600" : 
-                  isWarning ? "text-yellow-600" : "text-gray-700"
-                }`}
-              >
-                {isRecommendation ? (
-                  <span className="mr-2">•</span>
-                ) : isWarning ? (
-                  <svg className="w-4 h-4 mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                  </svg>
-                ) : null}
-                <span>{insight}</span>
-              </li>
-            );
-          })}
+          {insightsList.map((insight, index) => (
+            <li key={index} className="text-sm text-gray-700 flex items-start">
+              <span>{insight}</span>
+            </li>
+          ))}
         </ul>
       ) : (
         <div className="text-gray-500 text-sm flex items-center">
@@ -303,10 +310,12 @@ export const InsightComponent = ({ data = {}, config = {} }) => {
           No insights available from the current analysis.
         </div>
       )}
-      
+
       <div className="mt-3 pt-3 border-t border-gray-200 text-xs text-gray-500">
         <p>Insights generated at {new Date().toLocaleString()}</p>
       </div>
+
+      <JargonModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
     </div>
   );
 };

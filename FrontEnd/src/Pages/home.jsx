@@ -56,7 +56,7 @@ const Home = () => {
       {/* Details Section */}
       <div className="bg-white dark:bg-gray-950 text-gray-500 dark:text-gray-300 transition-all">
         <p className="text-2xl mx-14 font-medium mb-3 text-center py-10">
-          Lorem ipsum dolor sit amet consectetur, adipisicing elit. Mollitia dignissimos porro magnam voluptatibus reiciendis exercitationem facilis provident sequi quibusdam id.
+           Simplify your data journey — from upload to visualization.
         </p>
       </div>
 
