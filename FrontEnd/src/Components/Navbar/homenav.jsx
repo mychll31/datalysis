@@ -2,17 +2,26 @@ import { useState, useEffect } from "react";
 import MobileMenuButton from "./MobileMenuButton";
 import { Sun, Moon } from "lucide-react"; // Import icons
 import HomePageLinks from "./homepagelinks"; // Correct import
+import { useNavigate } from "react-router-dom"; // For client-side navigation
 
-const homenav = () => {
+const Homenav = () => {
     const [isOpen, setIsOpen] = useState(false);
     const [darkMode, setDarkMode] = useState(localStorage.getItem("theme") === "dark");
     const [animating, setAnimating] = useState(false); // Controls animation
-    const [isOnProfilePage, setIsOnProfilePage] = useState(false);
+    const [user, setUser] = useState(null); // User state to manage user info
+    const navigate = useNavigate(); // Navigate hook from react-router-dom
+
     // Retrieve profile image and user info from localStorage (if available)
     const profileImage = localStorage.getItem("profileImage") || "https://via.placeholder.com/40"; // Default to placeholder if no image
-    const user = localStorage.getItem("User");
 
     useEffect(() => {
+        // Check if user exists in localStorage and set state
+        const savedUser = localStorage.getItem("User");
+        if (savedUser) {
+            setUser(JSON.parse(savedUser)); // Parse and set user state
+        }
+
+        // Handle dark mode based on localStorage
         if (darkMode) {
             document.documentElement.classList.add("dark");
             localStorage.setItem("theme", "dark");
@@ -31,11 +40,16 @@ const homenav = () => {
     };
 
     const handleImageClick = () => {
-        const currentPath = window.location.pathname;
-        if (currentPath === '/profile') {
-            window.location.href = "/homepage";
+        if (!user) {
+            // If no user is logged in, redirect to login page
+            navigate("/login");
         } else {
-            window.location.href = "/profile";
+            const currentPath = window.location.pathname;
+            if (currentPath === '/profile') {
+                navigate("/homepage"); // Navigate to homepage if on profile
+            } else {
+                navigate("/profile"); // Navigate to profile if on homepage
+            }
         }
     };
 
@@ -58,7 +72,6 @@ const homenav = () => {
                                 src={profileImage} // Display profile image from localStorage
                                 alt="Profile"
                                 className="h-10 w-10 rounded-full border-2 border-white object-cover cursor-pointer"
-                                // Optionally, add a link to profile page
                                 onClick={handleImageClick} // Toggle between profile and homepage
                             />
                         </div>
@@ -83,4 +96,4 @@ const homenav = () => {
     );
 };
 
-export default homenav;
+export default Homenav;
