@@ -12,7 +12,7 @@ const Cards = () => {
                         <div className={`relative mx-1 mt-5 overflow-hidden bg-iconImg1 bg-no-repeat bg-contain bg-clip-border w-20 h-28`}></div>
 
                         <p className="text-center mx-5 my-5">
-                            Lorem ipsum dolor sit amet consectetur, adipisicing elit. Mollitia dignissimos porro magnam voluptatibus reiciendis exercitationem facilis provident sequi quibusdam id.
+                        Quickly upload your datasets from various sources with just a few clicks. Our tool supports CSV, Excel, and other common formats, making data onboarding effortless.
                         </p>
                     </div>
                 </div>
@@ -28,7 +28,7 @@ const Cards = () => {
                         <div className={`relative mx-1 mt-5 overflow-hidden bg-iconImg2 bg-no-repeat bg-contain bg-clip-border w-20 h-28`}></div>
 
                         <p className="text-center mx-5 my-5">
-                            Lorem ipsum dolor sit amet consectetur, adipisicing elit. Mollitia dignissimos porro magnam voluptatibus reiciendis exercitationem facilis provident sequi quibusdam id.
+                           Detect and correct inconsistencies, missing values, and formatting issues. Ensure your data is clean and ready for analysis without manual hassle.
                         </p>
                     </div>
                 </div>
@@ -44,7 +44,7 @@ const Cards = () => {
                         <div className={`relative mx-1 mt-5 overflow-hidden bg-iconImg3 bg-no-repeat bg-contain bg-clip-border w-20 h-28`}></div>
 
                         <p className="text-center mx-5 my-5">
-                            Lorem ipsum dolor sit amet consectetur, adipisicing elit. Mollitia dignissimos porro magnam voluptatibus reiciendis exercitationem facilis provident sequi quibusdam id.
+                            Unlock insights with advanced analytical tools. From statistical summaries to trend detection, our platform simplifies complex analysis for actionable results.
                         </p>
                     </div>
                 </div>
@@ -60,7 +60,7 @@ const Cards = () => {
                         <div className={`relative mx-1 mt-5 overflow-hidden bg-iconImg4 bg-no-repeat bg-contain bg-clip-border w-20 h-28`}></div>
 
                         <p className="text-center mx-5 my-5">
-                            Lorem ipsum dolor sit amet consectetur, adipisicing elit. Mollitia dignissimos porro magnam voluptatibus reiciendis exercitationem facilis provident sequi quibusdam id.
+                            Transform your data into compelling visuals. Choose from charts, graphs, and dashboards to clearly communicate insights and trends.
                         </p>
                     </div>
                 </div>

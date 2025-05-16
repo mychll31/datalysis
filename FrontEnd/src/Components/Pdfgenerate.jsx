@@ -122,7 +122,7 @@ export const handleGeneratePDF = async (chartElements, companyName, csvMetaData 
 
   } catch (error) {
     console.error("PDF Generation Error:", error);
-    alert(error.message || "Failed to generate PDF");
+    alert(error.message || "Failed to generate PDF"); 
     return { success: false, error: error.message };
   }
 };

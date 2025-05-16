@@ -14,21 +14,25 @@ const CsvTable = ({ columns: csvColumns, csvData, onFilterChange }) => {
   const [filterValue, setFilterValue] = useState('');
   const [columnFilters, setColumnFilters] = useState([]);
 
-  // Prepare columns for react-table with custom filter function assigned
-  const columns = useMemo(() => (
-    csvColumns.map(col => ({
-      accessorKey: col,
-      header: col,
-      cell: info => info.getValue(),
-      filterFn: 'customFilter', // Apply custom filter function for range filtering
-      meta: {
-        isNumeric: csvData.some(row => !isNaN(parseFloat(row[col])) && isFinite(row[col])),
-        isDate: csvData.some(row => !isNaN(Date.parse(row[col])))
-      }
-    }))
-  ), [csvColumns, csvData]);
+  // 1. Memoize your column definitions
+  const columns = useMemo(
+    () =>
+      csvColumns.map(col => ({
+        accessorKey: col,
+        header: col,
+        cell: info => info.getValue(),
+        filterFn: 'customFilter',
+        meta: {
+          isNumeric: csvData.some(
+            row => !isNaN(parseFloat(row[col])) && isFinite(row[col])
+          ),
+          isDate: csvData.some(row => !isNaN(Date.parse(row[col])))
+        }
+      })),
+    [csvColumns, csvData]
+  );
 
-  // Create the table instance with pagination
+  // 2. Build the table instance
   const table = useReactTable({
     data: csvData,
     columns,
@@ -44,59 +48,46 @@ const CsvTable = ({ columns: csvColumns, csvData, onFilterChange }) => {
     getPaginationRowModel: getPaginationRowModel(),
     filterFns: {
       customFilter: (row, columnId, filterValue) => {
-        const columnMeta = columns.find(col => col.accessorKey === columnId)?.meta;
+        const columnMeta = columns.find(c => c.accessorKey === columnId)?.meta;
         const cellValue = row.getValue(columnId);
-        
+
         if (!filterValue) return true;
-        
-        // Handle numeric range filters (e.g., "10-20", ">50", "<30")
+
         if (columnMeta?.isNumeric && !isNaN(parseFloat(cellValue))) {
           const numValue = parseFloat(cellValue);
-          
-          // Range format (e.g., "10-20")
           if (filterValue.includes('-')) {
             const [min, max] = filterValue.split('-').map(Number);
             return numValue >= min && numValue <= max;
-          }
-          // Greater than (e.g., ">50")
-          else if (filterValue.startsWith('>')) {
-            const threshold = parseFloat(filterValue.substring(1));
-            return numValue > threshold;
-          }
-          // Less than (e.g., "<30")
-          else if (filterValue.startsWith('<')) {
-            const threshold = parseFloat(filterValue.substring(1));
-            return numValue < threshold;
-          }
-          // Greater than or equal (e.g., ">=50")
-          else if (filterValue.startsWith('>=')) {
-            const threshold = parseFloat(filterValue.substring(2));
-            return numValue >= threshold;
-          }
-          // Less than or equal (e.g., "<=30")
-          else if (filterValue.startsWith('<=')) {
-            const threshold = parseFloat(filterValue.substring(2));
-            return numValue <= threshold;
+          } else if (filterValue.startsWith('>=')) {
+            return numValue >= parseFloat(filterValue.slice(2));
+          } else if (filterValue.startsWith('<=')) {
+            return numValue <= parseFloat(filterValue.slice(2));
+          } else if (filterValue.startsWith('>')) {
+            return numValue > parseFloat(filterValue.slice(1));
+          } else if (filterValue.startsWith('<')) {
+            return numValue < parseFloat(filterValue.slice(1));
           }
         }
-        
-        // Default string contains filter for non-numeric or simple values
-        return String(cellValue).toLowerCase().includes(filterValue.toLowerCase());
-      },
+
+        return String(cellValue)
+          .toLowerCase()
+          .includes(filterValue.toLowerCase());
+      }
     },
     initialState: {
-      pagination: {
-        pageSize: 20, // Default page size
-      },
-    },
+      pagination: { pageSize: 20 }
+    }
   });
 
-  // Call onFilterChange whenever the filtered data changes
+  // 3. Only fire onFilterChange when *your* filter inputs change, not on the table rows array
   useEffect(() => {
     if (onFilterChange) {
-      onFilterChange(table.getFilteredRowModel().rows.map(row => row.original));
+      const filtered = table
+        .getFilteredRowModel()
+        .rows.map(row => row.original);
+      onFilterChange(filtered);
     }
-  }, [table.getFilteredRowModel().rows, onFilterChange]);
+  }, [searchTerm, columnFilters, csvData, onFilterChange]);
 
   const addFilter = () => {
     if (selectedColumn && filterValue) {
@@ -108,9 +99,8 @@ const CsvTable = ({ columns: csvColumns, csvData, onFilterChange }) => {
     }
   };
 
-  const removeFilter = columnId => {
+  const removeFilter = columnId =>
     setColumnFilters(prev => prev.filter(f => f.id !== columnId));
-  };
 
   const clearAllFilters = () => {
     setColumnFilters([]);
