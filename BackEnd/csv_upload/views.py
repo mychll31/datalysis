@@ -1,226 +1,233 @@
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.core.files.storage import default_storage
+
 import h2o
 from h2o.automl import H2OAutoML
+from h2o.exceptions import H2OStartupError
+
 import pandas as pd
 import numpy as np
 import logging
 import json
 import requests
-from scipy.stats import pearsonr, pointbiserialr, f_oneway
+from scipy.stats import pearsonr, pointbiserialr, f_oneway, chi2_contingency
 from collections import defaultdict
-from scipy import stats
 from urllib.parse import urlparse
 
-# Initialize H2O
-h2o.init()
+
+def ensure_h2o():
+    """
+    Initialize H2O only when needed.
+    Raises H2OStartupError if Java/JRE is missing.
+    """
+    try:
+        # If a cluster is already running, this returns True
+        if not h2o.cluster().is_running():
+            h2o.init()
+    except Exception:
+        # Try one more time, then bubble up startup errors
+        try:
+            h2o.init()
+        except H2OStartupError as e:
+            logging.error(f"H2O failed to start: {e}")
+            raise
+
 
 def is_valid_url(url):
     try:
         result = urlparse(url)
         return all([result.scheme, result.netloc])
-    except:
+    except Exception:
         return False
 
+
 def load_data(file_obj, file_type):
-    """Load data from either CSV or JSON source"""
+    """
+    Load data from either a CSV upload or JSON (upload/string).
+    Returns a pandas.DataFrame.
+    """
     try:
         if file_type == 'csv':
+            # Save temp file to default storage
             file_path = default_storage.save("temp.csv", file_obj)
-            data = h2o.import_file(file_path)
-            df = data.as_data_frame()
+            h2o_frame = h2o.import_file(file_path)
+            df = h2o_frame.as_data_frame()
             default_storage.delete(file_path)
             return df
-        elif file_type == 'json':
 
-            if hasattr(file_obj, 'read'):  # File upload
+        elif file_type == 'json':
+            # Uploaded file-like or a raw JSON string
+            if hasattr(file_obj, 'read'):
                 json_data = json.load(file_obj)
-            else:  # JSON string
+            else:
                 json_data = json.loads(file_obj)
             return pd.DataFrame(json_data)
-            
+
         return None
+
     except Exception as e:
-        logging.error(f"Error loading {file_type} data: {str(e)}")
+        logging.error(f"Error loading {file_type} data: {e}")
         raise
 
+
 def process_pie_chart(df, target_column):
-    """Process data for pie chart visualization"""
+    """
+    Build label/value dict for a pie chart on a single column.
+    """
     if target_column not in df.columns:
         raise ValueError(f"Column '{target_column}' not found")
-    
+
     col = df[target_column]
-    value_counts = col.value_counts().to_dict()
-    
+    counts = col.value_counts().to_dict()
     return {
-        'labels': list(value_counts.keys()),
-        'values': list(value_counts.values())
+        'labels': list(counts.keys()),
+        'values': list(counts.values())
     }
+
 
 @csrf_exempt
 def analyze_data(request):
     if request.method != 'POST':
         return JsonResponse({'error': 'Only POST method allowed'}, status=405)
 
+    # Ensure H2O cluster is up (or return clean JSON error)
     try:
-       
-        # 1. Validate input
-        data_source = None
+        ensure_h2o()
+    except H2OStartupError:
+        return JsonResponse(
+            {'error': 'Server mis-configured: could not start H2O (Java missing?)'},
+            status=500
+        )
+
+    try:
+        # 1. Determine data source
         file_type = None
+        data_source = None
         output_type = request.POST.get('output_type', 'relationship').strip()
-        
-        # Check for file upload
+
         if 'file' in request.FILES:
-            file_obj = request.FILES['file']
-            if file_obj.name.lower().endswith('.csv'):
+            f = request.FILES['file']
+            if f.name.lower().endswith('.csv'):
                 file_type = 'csv'
-            elif file_obj.name.lower().endswith('.json'):
+            elif f.name.lower().endswith('.json'):
                 file_type = 'json'
             else:
-                return JsonResponse({'error': 'Unsupported file type. Please upload CSV or JSON'}, status=400)
-            data_source = file_obj
-            
-        # Check for JSON URL
+                return JsonResponse({'error': 'Unsupported file type. Use CSV or JSON.'}, status=400)
+            data_source = f
+
         elif 'json_url' in request.POST:
             url = request.POST['json_url'].strip()
             if not is_valid_url(url):
                 return JsonResponse({'error': 'Invalid URL provided'}, status=400)
-            try:
-                response = requests.get(url)
-                response.raise_for_status()
-                data_source = response.text
-                file_type = 'json'
-            except requests.RequestException as e:
-                return JsonResponse({'error': f'Failed to fetch JSON from URL: {str(e)}'}, status=400)
-                
-        # Check for direct JSON data
+            resp = requests.get(url)
+            resp.raise_for_status()
+            data_source = resp.text
+            file_type = 'json'
+
         elif 'json_data' in request.POST:
             data_source = request.POST['json_data']
             file_type = 'json'
-            
         else:
-            return JsonResponse({'error': 'No data source provided. Please upload a file, provide JSON URL, or paste JSON data'}, status=400)
+            return JsonResponse({
+                'error': 'No data source provided. Upload file, JSON URL, or JSON data.'
+            }, status=400)
 
-        target_column1 = request.POST.get('target_column1', '').strip()
-        target_column2 = request.POST.get('target_column2', '').strip()
-        
-        # 2. Validate columns based on output type
-        if output_type == 'pie':
-            if not target_column1:
-                return JsonResponse({'error': 'Target column must be specified for pie chart'}, status=400)
-        else:
-            if not target_column1 or not target_column2:
-                return JsonResponse({'error': 'Both target columns must be specified'}, status=400)
+        # 2. Validate required form fields
+        col1 = request.POST.get('target_column1', '').strip()
+        col2 = request.POST.get('target_column2', '').strip()
+        if output_type == 'pie' and not col1:
+            return JsonResponse({'error': 'Must specify target_column1 for pie chart'}, status=400)
+        if output_type != 'pie' and (not col1 or not col2):
+            return JsonResponse({'error': 'Must specify both target columns'}, status=400)
 
-        # 3. Process data
+        # 3. Load into pandas DataFrame
         df = load_data(data_source, file_type)
         if df is None:
-            return JsonResponse({'error': 'Failed to process data'}, status=400)
+            return JsonResponse({'error': 'Failed to load data'}, status=400)
 
-        # 4. Handle different output types
+        # 4. Pie chart logic
         if output_type == 'pie':
-            # Pie chart processing
-            if target_column1 not in df.columns:
+            if col1 not in df.columns:
                 return JsonResponse({
-                    'error': f'Column "{target_column1}" not found. Available: {list(df.columns)}'
+                    'error': f'Column "{col1}" not found. Available: {list(df.columns)}'
                 }, status=400)
-            
-            pie_data = process_pie_chart(df, target_column1)
-            col = df[target_column1]
-            is_numeric = pd.api.types.is_numeric_dtype(col)
-            
-            response = {
+
+            pie = process_pie_chart(df, col1)
+            series = df[col1]
+            is_num = pd.api.types.is_numeric_dtype(series)
+
+            return JsonResponse({
                 'status': 'success',
                 'data_source_type': file_type,
                 'output_type': 'pie',
-                'plot_data': pie_data,
-                'column_names': [target_column1],
+                'plot_data': pie,
+                'column_names': [col1],
                 'column_stats': {
-                    target_column1: {
-                        'type': 'numeric' if is_numeric else 'categorical',
-                        'unique_values': int(col.nunique()),
-                        'null_count': int(col.isnull().sum())
+                    col1: {
+                        'type': 'numeric' if is_num else 'categorical',
+                        'unique_values': int(series.nunique()),
+                        'null_count': int(series.isnull().sum())
                     }
                 }
-            }
-            
-            return JsonResponse(response)
-        
-        # Original relationship analysis for other output types
-        # Validate columns exist
-        for col in [target_column1, target_column2]:
-            if col not in df.columns:
+            })
+
+        # 5. Relationship analysis
+        for c in [col1, col2]:
+            if c not in df.columns:
                 return JsonResponse({
-                    'error': f'Column "{col}" not found. Available: {list(df.columns)}'
+                    'error': f'Column "{c}" not found. Available: {list(df.columns)}'
                 }, status=400)
 
-        # Prepare columns and determine types
-        col1 = pd.to_numeric(df[target_column1], errors='ignore')
-        col2 = pd.to_numeric(df[target_column2], errors='ignore')
-        
-        col1_numeric = pd.api.types.is_numeric_dtype(col1)
-        col2_numeric = pd.api.types.is_numeric_dtype(col2)
+        s1 = pd.to_numeric(df[col1], errors='ignore')
+        s2 = pd.to_numeric(df[col2], errors='ignore')
+        n1 = pd.api.types.is_numeric_dtype(s1)
+        n2 = pd.api.types.is_numeric_dtype(s2)
 
-        relationship_type = (
-            "numeric-numeric" if col1_numeric and col2_numeric else
-            "numeric-categorical" if col1_numeric else
-            "categorical-numeric" if col2_numeric else
+        rel_type = (
+            "numeric-numeric" if n1 and n2 else
+            "numeric-categorical" if n1 else
+            "categorical-numeric" if n2 else
             "categorical-categorical"
         )
 
-        # Initialize response structure
-        plot_data = {
-            'x': [],
-            'y': [],
-            'predicted': None,
-            'confidence_interval': None,
-            'group_means': None
-        }
+        plot_data = {'x': [], 'y': [], 'predicted': None, 'confidence_interval': None, 'group_means': None}
         correlation = None
-        stats_results = None
+        stats_res = None
         model_perf = None
 
-        # Handle each relationship type
-        if relationship_type == "numeric-numeric":
-            valid_mask = col1.notna() & col2.notna()
-            if sum(valid_mask) > 1:
-                correlation = pearsonr(col1[valid_mask], col2[valid_mask])[0]
-            
-            train_frame = h2o.H2OFrame(df[[target_column1, target_column2]].dropna())
-            
-            if abs(correlation) < 0.3:
-                train_frame['x_squared'] = train_frame[target_column1]**2
-                features = [target_column1, 'x_squared']
-            else:
-                features = [target_column1]
-            
-            aml = H2OAutoML(
-                max_models=3, 
-                seed=42, 
-                max_runtime_secs=30,
-                stopping_metric="RMSE",
-                stopping_tolerance=0.01
-            )
-            aml.train(x=features, y=target_column2, training_frame=train_frame)
-            
-            preds = aml.leader.predict(train_frame)
-            preds_df = preds.as_data_frame()
-            
-            residuals = col2[valid_mask] - preds_df['predict']
-            std_err = np.std(residuals)
-            ci = 1.96 * std_err
-            
+        # -- Numeric vs Numeric
+        if rel_type == "numeric-numeric":
+            mask = s1.notna() & s2.notna()
+            if mask.sum() > 1:
+                correlation = pearsonr(s1[mask], s2[mask])[0]
+
+            hf = h2o.H2OFrame(df[[col1, col2]].dropna())
+            # feature engineering if low correlation
+            features = [col1]
+            if abs(correlation or 0) < 0.3:
+                hf['x2'] = hf[col1] ** 2
+                features.append('x2')
+
+            aml = H2OAutoML(max_models=3, seed=42, max_runtime_secs=30,
+                            stopping_metric="RMSE", stopping_tolerance=0.01)
+            aml.train(x=features, y=col2, training_frame=hf)
+
+            preds = aml.leader.predict(hf).as_data_frame()['predict']
+            residuals = s2[mask] - preds
+            se = np.std(residuals)
+            ci = 1.96 * se
+
             plot_data = {
-                'x': col1.tolist(),
-                'y': col2.tolist(),
-                'predicted': preds_df['predict'].tolist(),
+                'x': s1.tolist(),
+                'y': s2.tolist(),
+                'predicted': preds.tolist(),
                 'confidence_interval': {
-                    'upper': (preds_df['predict'] + ci).tolist(),
-                    'lower': (preds_df['predict'] - ci).tolist()
+                    'upper': (preds + ci).tolist(),
+                    'lower': (preds - ci).tolist()
                 }
             }
-            
+
             model_perf = {
                 'model_type': str(aml.leader),
                 'r2': aml.leader.r2(),
@@ -228,116 +235,87 @@ def analyze_data(request):
                 'mae': aml.leader.mae()
             }
 
-        elif relationship_type == "numeric-categorical":
-            categories = col2.astype(str)
-            valid_mask = col1.notna() & categories.notna()
-            
-            if sum(valid_mask) > 1:
-                unique_cats = categories[valid_mask].nunique()
-                if unique_cats == 2:
-                    cat_codes = pd.factorize(categories[valid_mask])[0]
-                    correlation = pointbiserialr(col1[valid_mask], cat_codes)[0]
-                elif unique_cats > 2:
+        # -- Numeric vs Categorical
+        elif rel_type == "numeric-categorical":
+            cats = s2.astype(str)
+            mask = s1.notna() & cats.notna()
+            if mask.sum() > 1:
+                uc = cats[mask].nunique()
+                if uc == 2:
+                    codes = pd.factorize(cats[mask])[0]
+                    correlation = pointbiserialr(s1[mask], codes)[0]
+                elif uc > 2:
                     groups = defaultdict(list)
-                    for cat, num in zip(categories[valid_mask], col1[valid_mask]):
-                        groups[cat].append(num)
-                    
-                    f_val, p_val = f_oneway(*groups.values())
-                    stats_results = {
-                        'anova': {
-                            'f_statistic': f_val,
-                            'p_value': p_val,
-                            'effect_size': np.sqrt(f_val/(f_val + (len(col1[valid_mask]) - len(groups))))
-                        }
+                    for cat, val in zip(cats[mask], s1[mask]):
+                        groups[cat].append(val)
+                    f, p = f_oneway(*groups.values())
+                    stats_res = {
+                        'anova': {'f_statistic': f, 'p_value': p,
+                                  'effect_size': np.sqrt(f / (f + (len(s1[mask]) - len(groups))))}
                     }
-            
-            group_means = col1.groupby(categories).mean().to_dict()
-            plot_data = {
-                'x': categories.tolist(),
-                'y': col1.tolist(),
-                'group_means': group_means
-            }
+            gm = s1.groupby(cats).mean().to_dict()
+            plot_data = {'x': cats.tolist(), 'y': s1.tolist(), 'group_means': gm}
 
-        elif relationship_type == "categorical-numeric":
-            categories = col1.astype(str)
-            valid_mask = col2.notna() & categories.notna()
-            
-            if sum(valid_mask) > 1:
-                unique_cats = categories[valid_mask].nunique()
-                if unique_cats == 2:
-                    cat_codes = pd.factorize(categories[valid_mask])[0]
-                    correlation = pointbiserialr(col2[valid_mask], cat_codes)[0]
-                elif unique_cats > 2:
+        # -- Categorical vs Numeric
+        elif rel_type == "categorical-numeric":
+            cats = s1.astype(str)
+            mask = s2.notna() & cats.notna()
+            if mask.sum() > 1:
+                uc = cats[mask].nunique()
+                if uc == 2:
+                    codes = pd.factorize(cats[mask])[0]
+                    correlation = pointbiserialr(s2[mask], codes)[0]
+                elif uc > 2:
                     groups = defaultdict(list)
-                    for cat, num in zip(categories[valid_mask], col2[valid_mask]):
-                        groups[cat].append(num)
-                    
-                    f_val, p_val = f_oneway(*groups.values())
-                    stats_results = {
-                        'anova': {
-                            'f_statistic': f_val,
-                            'p_value': p_val,
-                            'effect_size': np.sqrt(f_val/(f_val + (len(col2[valid_mask]) - len(groups))))
-                        }
+                    for cat, val in zip(cats[mask], s2[mask]):
+                        groups[cat].append(val)
+                    f, p = f_oneway(*groups.values())
+                    stats_res = {
+                        'anova': {'f_statistic': f, 'p_value': p,
+                                  'effect_size': np.sqrt(f / (f + (len(s2[mask]) - len(groups))))}
                     }
-            
-            group_means = col2.groupby(categories).mean().to_dict()
-            plot_data = {
-                'x': categories.tolist(),
-                'y': col2.tolist(),
-                'group_means': group_means
-            }
+            gm = s2.groupby(cats).mean().to_dict()
+            plot_data = {'x': cats.tolist(), 'y': s2.tolist(), 'group_means': gm}
 
-        else:  # categorical-categorical
-            from scipy.stats import chi2_contingency
-            contingency = pd.crosstab(col1.astype(str), col2.astype(str))
-            if contingency.size > 0:
-                chi2, p, dof, _ = chi2_contingency(contingency)
-                stats_results = {
-                    'chi_square': {
-                        'statistic': chi2,
-                        'p_value': p,
-                        'degrees_of_freedom': dof
-                    }
-                }
-            
-            plot_data = {
-                'x': col1.astype(str).tolist(),
-                'y': col2.astype(str).tolist()
-            }
+        # -- Categorical vs Categorical
+        else:
+            tab = pd.crosstab(s1.astype(str), s2.astype(str))
+            if tab.size:
+                chi2, p, dof, _ = chi2_contingency(tab)
+                stats_res = {'chi_square': {'statistic': chi2, 'p_value': p, 'degrees_of_freedom': dof}}
+            plot_data = {'x': s1.astype(str).tolist(), 'y': s2.astype(str).tolist()}
 
-        # Build final response for relationship charts
-        response = {
+        # Final JSON response
+        return JsonResponse({
             'status': 'success',
             'data_source_type': file_type,
             'output_type': output_type,
-            'relationship_type': relationship_type,
+            'relationship_type': rel_type,
             'correlation': correlation,
             'plot_data': plot_data,
-            'column_names': [target_column1, target_column2],
+            'column_names': [col1, col2],
             'column_stats': {
-                target_column1: {
-                    'type': 'numeric' if col1_numeric else 'categorical',
-                    'unique_values': int(col1.nunique()),
-                    'null_count': int(col1.isnull().sum())
+                col1: {
+                    'type': 'numeric' if n1 else 'categorical',
+                    'unique_values': int(s1.nunique()),
+                    'null_count': int(s1.isnull().sum())
                 },
-                target_column2: {
-                    'type': 'numeric' if col2_numeric else 'categorical',
-                    'unique_values': int(col2.nunique()),
-                    'null_count': int(col2.isnull().sum())
+                col2: {
+                    'type': 'numeric' if n2 else 'categorical',
+                    'unique_values': int(s2.nunique()),
+                    'null_count': int(s2.isnull().sum())
                 }
             },
-            'statistical_tests': stats_results,
+            'statistical_tests': stats_res,
             'model_performance': model_perf
-        }
-
-        return JsonResponse(response)
+        })
 
     except Exception as e:
         logging.exception("Processing error")
         return JsonResponse({'error': str(e)}, status=500)
-    
+
+
 @csrf_exempt
 def upload_csv(request):
-    """Legacy endpoint that forwards to analyze_data"""
+    """Legacy alias endpoint—just forward to analyze_data."""
     return analyze_data(request)
