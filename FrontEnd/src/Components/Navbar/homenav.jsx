@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import MobileMenuButton from "./MobileMenuButton";
 import { Sun, Moon } from "lucide-react"; // Import icons
-import HomePageLinks from "./homepagelinks"; // Correct import
+import HomePageLinks from "./HomePageLinks"; // Correct import
 import { useNavigate } from "react-router-dom"; // For client-side navigation
 
 const Homenav = () => {
