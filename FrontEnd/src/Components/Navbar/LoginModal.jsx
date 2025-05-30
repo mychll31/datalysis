@@ -7,7 +7,7 @@ import { handleResendVerification } from '../../utils/verificationUtils';
 
 // for Vite:
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-
+console.log("API base URL:", API_BASE_URL)
 // for CRA:
 // const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
 
