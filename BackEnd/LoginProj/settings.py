@@ -26,7 +26,13 @@ SECRET_KEY = 'django-insecure-im(_+=96seqvu2d_pi^1sfmy0yf&36(_fvi2jp#3fo$s=!^i07
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+
+ALLOWED_HOSTS = [
+    "localhost",
+    "127.0.0.1",
+    "datalysis.onrender.com",   # ← add this
+]
+
 
 
 # Application definition

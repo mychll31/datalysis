@@ -5,8 +5,13 @@ import "react-toastify/dist/ReactToastify.css";
 import { VerificationStep } from './VerificationStep';
 import { handleResendVerification } from '../../utils/verificationUtils';
 
+// for Vite:
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-const LoginModal = ({ isOpen, setIsOpen, setIsSignUpOpen, setIsForgotPasswordOpen, handleGoogleSignIn }) => {
+// for CRA:
+// const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
+
+const LoginModal = ({ isOpen, setIsOpen, setIsSignUpOpen, setIsForgotPasswordOpen }) => {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [rememberMe, setRememberMe] = useState(false);
@@ -39,7 +44,7 @@ const LoginModal = ({ isOpen, setIsOpen, setIsSignUpOpen, setIsForgotPasswordOpe
 
     const getCSRFToken = async () => {
         try {
-            const response = await fetch("http://localhost:8000/api/csrf/", {
+            const response = await fetch(`${API_BASE_URL}/api/csrf/`, {
                 method: "GET",
                 credentials: "include",
             });
@@ -66,7 +71,7 @@ const LoginModal = ({ isOpen, setIsOpen, setIsSignUpOpen, setIsForgotPasswordOpe
         }
 
         try {
-            const response = await fetch("http://localhost:8000/api/login/", {
+            const response = await fetch(`${API_BASE_URL}/api/login/`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -124,7 +129,7 @@ const LoginModal = ({ isOpen, setIsOpen, setIsSignUpOpen, setIsForgotPasswordOpe
 
         if (!code) return alert('Please enter the code.');
         try {
-            const response = await fetch('http://localhost:8000/signup_verify/', {
+            const response = await fetch(`${API_BASE_URL}/signup_verify/`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, code })
@@ -151,7 +156,7 @@ const LoginModal = ({ isOpen, setIsOpen, setIsSignUpOpen, setIsForgotPasswordOpe
     // Sends the code to the backend for verification
     const handleVerification = async () => {
         try {
-            const response = await fetch("http://localhost:8000/signup_verify/", {
+            const response = await fetch(`${API_BASE_URL}/signup_verify/`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ email, code: verificationCode }),
@@ -224,14 +229,6 @@ const LoginModal = ({ isOpen, setIsOpen, setIsSignUpOpen, setIsForgotPasswordOpe
                             </div>
 
                             {error && <p className="text-red-500">{error}</p>}
-
-                            <button
-                                onClick={handleGoogleSignIn}
-                                className="flex items-center justify-center space-x-2 border border-gray-300 text-gray-600 rounded-md px-4 py-2 w-full hover:bg-gray-100"
-                            >
-                                <img src="https://cdn1.iconfinder.com/data/icons/google-s-logo/150/Google_Icons-09-1024.png" alt="Google" className="w-5 h-5" />
-                                <span>Sign in with Google</span>
-                            </button>
 
                             <button
                                 onClick={handleSubmit}
