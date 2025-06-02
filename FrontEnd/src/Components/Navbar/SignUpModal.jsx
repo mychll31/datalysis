@@ -2,6 +2,10 @@ import { useEffect, useState } from "react"; // Import useEffect
 import { VerificationStep } from './VerificationStep';
 import { handleResendVerification } from '../../utils/verificationUtils';
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+console.log("ALL ENV:", import.meta.env);
+console.log("API base URL:", API_BASE_URL)
+
 const SignUpModal = ({ isOpen, setIsOpen, setIsLoginOpen }) => {
     // ✅ Declare state at the top level
     const [username, setUsername] = useState(""); // Added username
@@ -17,7 +21,7 @@ const SignUpModal = ({ isOpen, setIsOpen, setIsLoginOpen }) => {
 
     const fetchCsrfToken = async () => {
         try {
-            const response = await fetch("http://localhost:8000/api/csrf/", {
+            const response = await fetch(`${API_BASE_URL}/api/csrf/`, {
                 method: "GET",
                 credentials: "include", // ✅ Important for cookies
             });
@@ -66,7 +70,7 @@ const SignUpModal = ({ isOpen, setIsOpen, setIsLoginOpen }) => {
         try {
             const csrfToken = localStorage.getItem("csrfToken"); // Get CSRF token
 
-            const response = await fetch("http://localhost:8000/api/signup/", {
+            const response = await fetch(`${API_BASE_URL}/api/signup/`, {
                 method: "POST",
                 headers: { 
                     "Content-Type": "application/json",
@@ -99,7 +103,7 @@ const SignUpModal = ({ isOpen, setIsOpen, setIsLoginOpen }) => {
 
         if (!code) return alert('Please enter the code.');
         try {
-            const response = await fetch('http://localhost:8000/signup_verify/', {
+            const response = await fetch(`${API_BASE_URL}/api/signup_verify/`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, code })

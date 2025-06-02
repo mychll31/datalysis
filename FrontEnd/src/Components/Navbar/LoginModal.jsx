@@ -7,6 +7,7 @@ import { handleResendVerification } from '../../utils/verificationUtils';
 
 // for Vite:
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+console.log("ALL ENV:", import.meta.env);
 console.log("API base URL:", API_BASE_URL)
 // for CRA:
 // const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
@@ -129,7 +130,7 @@ const LoginModal = ({ isOpen, setIsOpen, setIsSignUpOpen, setIsForgotPasswordOpe
 
         if (!code) return alert('Please enter the code.');
         try {
-            const response = await fetch(`${API_BASE_URL}/signup_verify/`, {
+            const response = await fetch(`${API_BASE_URL}/api/signup_verify/`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, code })
@@ -156,7 +157,7 @@ const LoginModal = ({ isOpen, setIsOpen, setIsSignUpOpen, setIsForgotPasswordOpe
     // Sends the code to the backend for verification
     const handleVerification = async () => {
         try {
-            const response = await fetch(`${API_BASE_URL}/signup_verify/`, {
+            const response = await fetch(`${API_BASE_URL}/api/signup_verify/`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ email, code: verificationCode }),
