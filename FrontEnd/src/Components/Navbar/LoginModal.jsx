@@ -6,7 +6,7 @@ import { VerificationStep } from './VerificationStep';
 import { handleResendVerification } from '../../utils/verificationUtils';
 
 // for Vite:
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+const API_BASE_URL = "https://datalysis.onrender.com";
 console.log("ALL ENV:", import.meta.env);
 console.log("API base URL:", API_BASE_URL)
 // for CRA:
