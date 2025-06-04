@@ -103,7 +103,7 @@ const SignUpModal = ({ isOpen, setIsOpen, setIsLoginOpen }) => {
 
         if (!code) return alert('Please enter the code.');
         try {
-            const response = await fetch(`${API_BASE_URL}/api/signup_verify/`, {
+            const response = await fetch(`${API_BASE_URL}/api/verify_signup_code/`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, code })
