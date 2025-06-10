@@ -1,5 +1,9 @@
 import { useState, useEffect } from 'react';
 
+const API_BASE_URL = "https://datalysis.onrender.com";
+console.log("ALL ENV:", import.meta.env);
+console.log("API base URL:", API_BASE_URL)
+
 export const useRelationshipData = (file, targetColumns) => {
   const [relationshipData, setRelationshipData] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -79,7 +83,7 @@ export const usePieChartData = (file, targetColumn) => {
           formData.append('target_column1', targetColumn);
           formData.append('output_type', 'pie');
 
-          const response = await fetch('http://localhost:8000/upload-csv/', {
+          const response = await fetch(`${API_BASE_URL}/upload-csv/`, {
             method: 'POST',
             body: formData,
             credentials: 'include'

@@ -7,6 +7,10 @@ import { FaChartLine, FaTrash } from "react-icons/fa";
 import Calculator from "../Components/FormulaPage/CalculatorButtons";
 import * as math from "mathjs";
 
+const API_BASE_URL = "https://datalysis.onrender.com";
+console.log("ALL ENV:", import.meta.env);
+console.log("API base URL:", API_BASE_URL)
+
 const FormulaPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -193,7 +197,7 @@ const FormulaPage = () => {
         formData.append("dataPointsCount", (csvData.length*columns.length).toString());
         formData.append("columnNames", columns.join(","));
       }
-      const resp = await fetch("http://localhost:8000/api/pdf/generate-report/", {
+      const resp = await fetch(`${API_BASE_URL}/api/pdf/generate-report/`, {
         method:"POST",
         body: formData
       });

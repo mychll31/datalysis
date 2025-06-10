@@ -11,6 +11,10 @@ import { InsightComponent } from "../Components/Insights";
 import { FaCalculator } from "react-icons/fa";
 import { handleGeneratePDF } from "../Components/Pdfgenerate";
 
+const API_BASE_URL = "https://datalysis.onrender.com";
+console.log("ALL ENV:", import.meta.env);
+console.log("API base URL:", API_BASE_URL)
+
 const Display = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -126,7 +130,7 @@ const Display = () => {
         formData.append("file", blob, "data.csv");
       }
 
-      const response = await fetch("http://localhost:8000/upload-csv/", {
+      const response = await fetch(`${API_BASE_URL}/upload-csv/`, {
         method: "POST",
         body: formData,
         credentials: "include",
