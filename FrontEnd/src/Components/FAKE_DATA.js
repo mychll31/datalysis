@@ -83,7 +83,7 @@ export const usePieChartData = (file, targetColumn) => {
           formData.append('target_column1', targetColumn);
           formData.append('output_type', 'pie');
 
-          const response = await fetch(`${API_BASE_URL}/upload-csv/`, {
+          const response = await fetch(`${API_BASE_URL}api/upload_csv/`, {
             method: 'POST',
             body: formData,
             credentials: 'include'

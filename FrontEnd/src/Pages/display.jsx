@@ -130,7 +130,7 @@ const Display = () => {
         formData.append("file", blob, "data.csv");
       }
 
-      const response = await fetch(`${API_BASE_URL}/upload-csv/`, {
+      const response = await fetch(`${API_BASE_URL}/api/upload_csv/`, {
         method: "POST",
         body: formData,
         credentials: "include",

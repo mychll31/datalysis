@@ -1,5 +1,7 @@
 import * as htmlToImage from 'html-to-image';
-
+const API_BASE_URL = "https://datalysis.onrender.com";
+console.log("ALL ENV:", import.meta.env);
+console.log("API base URL:", API_BASE_URL)
 // Helper function to convert data URL to blob
 const dataURLtoBlob = (dataUrl) => {
   const arr = dataUrl.split(',');
@@ -90,7 +92,7 @@ export const handleGeneratePDF = async (chartElements, companyName, csvMetaData 
     }
 
     // 3. Send to backend
-    const response = await fetch("http://localhost:8000/api/pdf/generate-report/", {
+    const response = await fetch(`${API_BASE_URL}/api/pdf/generate-report/`, {
       method: "POST",
       body: formData
     });

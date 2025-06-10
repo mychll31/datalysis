@@ -4,6 +4,10 @@ import { Menu, Home, Settings, User, LogOut, Loader } from "lucide-react";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
+const API_BASE_URL = "https://datalysis.onrender.com";
+console.log("ALL ENV:", import.meta.env);
+console.log("API base URL:", API_BASE_URL)
+
 const TableSidebar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
@@ -26,7 +30,7 @@ const TableSidebar = () => {
     setIsLoggingOut(true);
 
     try {
-      const response = await fetch("http://localhost:8000/api/logout/", {
+      const response = await fetch(`${API_BASE_URL}/api/logout/`, {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
