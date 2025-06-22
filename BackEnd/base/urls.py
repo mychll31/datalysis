@@ -1,16 +1,33 @@
-from django.urls import path
-from .views import login_view, csrf_token_view, signup # Import csrf_token_view
-from django.http import JsonResponse
-from django.middleware.csrf import get_token
-from user_management.views import user_info
-from csv_upload.views import upload_csv
+# backend/base/urls.py
 
+from django.contrib import admin
+from django.urls import path, include
+
+from .views import (
+    csrf_token_view,
+    login_view,
+    signup_view,
+    logout_view,
+)
+from signup.views import send_email_code, verify_signup_code
+from user_management.views import user_info
+from csv_upload.views import analyze_data
 
 urlpatterns = [
-    path("api/login/", login_view, name="login"),
-    path("api/csrf/", csrf_token_view, name="csrf_token"),
-    path("api/signup/", signup, name="signup"),  # Add CSRF token endpoint
-    path('api/user-info/', user_info, name='user_info'), #This user info endpoint
-    path('upload-csv/', upload_csv, name='upload_csv'), #This is the upload_csv endpoint
-]
+    path("admin/", admin.site.urls),
 
+    # CSRF & Auth
+    path("api/csrf/", csrf_token_view, name="api-csrf"),
+    path("api/login/", login_view, name="api-login"),
+    path("api/logout/", logout_view, name="api-logout"),
+
+    # Signup & OTP
+    path("api/signup/", signup_view, name="api-signup"),
+    path("api/send_email_code/", send_email_code, name="api-send-email-code"),
+    path("api/verify_signup_code/", verify_signup_code, name="api-verify-signup-code"),
+
+    # Other endpoints
+    path("api/user-info/", user_info, name="api-user-info"),
+    path("api/upload_csv/", analyze_data, name="api-upload-csv"),
+    path("api/csv/", include("csv_upload.urls")),
+]

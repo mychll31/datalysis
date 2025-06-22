@@ -1,0 +1,509 @@
+import React, { useEffect, useState } from "react";
+import NavBar from "../Components/Navbar/Navbar";
+import CollapsibleSidebar from "../Components/Sidebar";
+import axios from 'axios';
+import Papa from 'papaparse';
+import UploadModal from "../Components/UploadModal";
+import { useNavigate, useLocation } from "react-router-dom";
+import "./UploadPage.css";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+
+const UploadPage = () => {
+  const [username, setUsername] = useState("");
+  const [file, setFile] = useState(null);
+  const [csvData, setCsvData] = useState([]);
+  const [columns, setColumns] = useState([]);
+  const [rowsCount, setRowsCount] = useState(0);
+  const [showModal, setShowModal] = useState(false);
+  const [totalDataPoints, setTotalDataPoints] = useState(0);
+  const [fileType, setFileType] = useState("");
+  const [isFileTypeSelected, setIsFileTypeSelected] = useState(false);
+  const [resetTransition, setResetTransition] = useState(false);
+  const [jsonLink, setJsonLink] = useState("");
+  const [error, setError] = useState("");
+  const [companyName, setCompanyName] = useState("");
+  const [contactNumber, setContactNumber] = useState("");
+  const [errors, setErrors] = useState({});
+  const [preservedCharts, setPreservedCharts] = useState([]);
+
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (location.state?.preserveCharts) {
+      setPreservedCharts(location.state.preserveCharts);
+    }
+  }, [location.state]);
+
+  useEffect(() => {
+    const fetchUserInfo = async () => {
+      try {
+        const response = await fetch("http://localhost:8000/api/user-info/", {
+          method: "GET",
+          credentials: "include",
+          mode: "cors",
+        });
+
+        console.log("Response Status:", response.status);
+
+        if (response.ok) {
+          const data = await response.json();
+          console.log("Fetch User Data:", data);
+          setUsername(data.username);
+        } else {
+          console.error("Failed to fetch user info. Status:", response.status);
+          const errorData = await response.json();
+          console.error("Error response:", errorData);
+        }
+      } catch (error) {
+        console.error("Error fetching user info:", error);
+      }
+    };
+
+    fetchUserInfo();
+  }, []);
+
+  useEffect(() => {
+    if (fileType) {
+      setFile(null);
+      setCsvData([]);
+      setColumns([]);
+      setRowsCount(0); 
+      setTotalDataPoints(0); 
+      setJsonLink(""); 
+      setError(""); 
+    }
+  }, [fileType]); 
+
+  const isNested = (obj) => {
+    for (let key in obj) {
+      if (typeof obj[key] === 'object' && obj[key] !== null) {
+        if (Array.isArray(obj[key]) || Object.keys(obj[key]).length > 0) {
+          return true;
+        }
+      }
+    }
+    return false;
+  };
+
+  const handleFileChange = (e) => {
+    const selectedFile = e.target.files[0];
+    setFile(selectedFile);
+    
+    if (selectedFile) {
+      // Save the file name or file to localStorage
+      localStorage.setItem('uploadedFileName', selectedFile.name); // Save file name (can be changed to save file data if needed)
+    
+      // Logic for processing CSV and JSON files as before
+      if (fileType === "csv") {
+        Papa.parse(selectedFile, {
+          complete: (result) => {
+            if (result.data.length > 0) {
+              const totalRows = result.data.length;
+              const totalCols = Object.keys(result.data[0]).length;
+
+              setColumns(Object.keys(result.data[0]));
+              setCsvData(result.data.slice(0, totalRows));
+              setRowsCount(totalRows);
+              setTotalDataPoints(totalCols * totalRows);
+              setShowModal(true);
+            }
+          },
+          header: true,
+          skipEmptyLines: true,
+        });
+
+      } else if (fileType === "json") {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          try {
+            const jsonData = JSON.parse(event.target.result);
+
+            if (Array.isArray(jsonData)) {
+              const hasNestedData = jsonData.some(item => typeof item === 'object' && item !== null && isNested(item)
+              );
+
+            if (hasNestedData) {
+              setError("Invalid JSON file. Contains nested objects/arrays. Please upload a flat JSON structure.");
+              toast.error("Nested JSON detected. Please upload a flat structure.");
+              setFile(null);
+              setCsvData([]);
+              return;
+              }
+
+              const totalRows = jsonData.length;
+              const totalCols = Object.keys(jsonData[0]).length;
+
+              setColumns(Object.keys(jsonData[0]));
+              setCsvData(jsonData.slice(0, totalRows));
+              setRowsCount(totalRows);
+              setTotalDataPoints(totalCols * totalRows);
+              setShowModal(true);
+            } else {
+              setError("Invalid JSON file. Expected an array of objects.");
+            }
+          } catch (error) {
+            setError("Failed to parse JSON file. Please check the file format.");
+          }
+        };
+        reader.readAsText(selectedFile);
+      }
+    }
+  };
+
+
+  const handleJsonLink = async (url) => {
+    try {
+      if (!url.match(/^https?:\/\/.+/i)) {
+        throw new Error("Invalid URL format. Please include http:// or https://");
+      }
+
+      const response = await axios.get(url);
+      const jsonData = response.data;
+
+      if (Array.isArray(jsonData)) {
+        const hasNestedData = jsonData.some(item => typeof item === 'object' && item !== null && isNested(item));
+
+        if (hasNestedData){
+          throw new Error("JSON data contains nested objects/arrays. Please provide a flat JSON structure.");
+        }
+        const totalRows = jsonData.length;
+        const totalCols = Object.keys(jsonData[0]).length;
+
+        setColumns(Object.keys(jsonData[0]));
+        setCsvData(jsonData.slice(0, totalRows));
+        setRowsCount(totalRows);
+        setTotalDataPoints(totalCols * totalRows);
+        setShowModal(true);
+        setError("");
+      } 
+    } catch (error) {
+      console.error("Error fetching JSON data:", error);
+      setError(error.message || "Invalid JSON link or data format. Please check the URL and try again.");
+      setCsvData([]);
+      setColumns([]);
+      setRowsCount(0);
+      setTotalDataPoints(0);
+    }
+  };
+
+  const validateForm = () => {
+    let errors = {};
+  
+    if (!companyName.trim()) {
+      errors.companyName = "Company name is required.";
+    }
+  
+    const contactNumberPattern = /^09\d{9}$/;
+    if (!contactNumber.trim()) {
+      errors.contactNumber = "Contact number is required.";
+    } else if (!contactNumberPattern.test(contactNumber)) {
+      errors.contactNumber = "Invalid contact number. Use format: 09XXXXXXXXX.";
+    }
+  
+    setErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const handleUpload = async () => {
+    if (!validateForm()){
+      console.log("Validation failed! Errors:", errors);
+      return false;
+    }
+    if (fileType === "json-link") {
+      console.log("JSON link data is ready for processing.");
+      return true;
+    }
+
+    if (!file) {
+      setError("Please upload a file.");
+      return false;
+    }
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+
+    try {
+        const response = await axios.post("http://127.0.0.1:8000/upload-csv/", formData);
+        console.log("Upload successful", response.data);
+        return true;
+    } catch (error) {
+        console.error("Upload error:", error);
+        setError("Failed to upload file. Please try again.");
+        return false;
+    }
+  };
+
+  const handleConfirm = () => {
+    if (fileType === "json-link") {
+      console.log("JSON link data confirmed:", csvData);
+      setShowModal(false);
+      return;
+    }
+
+    if (!file) return;
+    console.log("File to be uploaded:", file.name);
+    setShowModal(false);
+  };
+
+  const handleFileTypeChange = (e) => {
+    setFileType(e.target.value);
+    setIsFileTypeSelected(false);
+    setResetTransition(true);
+    setTimeout(() => {
+      setIsFileTypeSelected(true);
+      setResetTransition(false);
+    }, 10);
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleSubmit();
+    }
+  };
+
+  const handleSubmit = async () => {
+    let newErrors = {};
+  
+    if (!companyName.trim()) newErrors.companyName = "Company name is required.";
+  
+    if (!contactNumber.trim()) {
+      newErrors.contactNumber = "Contact number is required.";
+    } else if (!/^09\d{9}$/.test(contactNumber)) {
+      newErrors.contactNumber = "Invalid contact number. Use format: 09XXXXXXXXX.";
+    }
+  
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+  
+    setErrors({});
+  
+    try {
+
+      if(fileType === "json" || fileType === "json-link"){
+        if (csvData.length > 0) {
+          const hasNestedData = csvData.some(item => 
+            typeof item === 'object' && item !== null && isNested(item)
+          );
+          
+          if (hasNestedData) {
+            toast.error("Nested JSON data detected. Please upload a flat structure.");
+            return;
+          }
+        }
+      }
+
+      if (fileType === "json-link" && !csvData.length) {
+        alert("Please fetch JSON data before proceeding!");
+        return;
+      }
+  
+      if (fileType !== "json-link" && !file) {
+        alert("Please upload a file before proceeding!");
+        return;
+      }
+  
+      try {
+        await handleUpload();
+  
+        toast.success("Upload successful! Redirecting...", {
+          position: "top-right",
+          autoClose: 3000,
+        });
+  
+        setTimeout(() => {
+          navigate("/Display-Page", { 
+            state: { 
+              csvData, 
+              columns,
+              file,
+              preserveCharts: preservedCharts 
+            , companyName} 
+          });
+        }, 3000);
+  
+      } catch (error) {
+        console.error("Upload failed:", error);
+        toast.error("Upload failed. Please try again.");
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      toast.error("Error processing data. Please try again.");
+    }
+  };
+
+  return (
+    <div className="flex flex-col items-center justify-center min-h-screen bg-cover bg-center bg-uploadPage bg-gray-900 text-white font-inter">
+      <div className="absolute top-0 left-0 ml-10">
+        <CollapsibleSidebar />
+      </div>
+
+      <div className="pb-12">
+        <div className="mt-10 py-9 bg-logo bg-no-repeat bg-cover bg-center outline-transparent w-64 rounded-xl transition-all duration-300"></div>
+      </div>
+      <div className="text-center">
+        <h1 className="text-5xl font-bold">
+          Upload your database to unlock
+          <br /> powerful insights!
+        </h1>
+        <p className="text-xl text-gray-400 mt-9 mb-16">
+          Turn Your Data into Smart Decisions
+        </p>
+      </div>
+
+      <div className="w-2/5 mt-8 text-left">
+        <p className="text-lg mb-2">Select File Type</p>
+        <select
+          value={fileType}
+          onChange={handleFileTypeChange}
+          className="w-full p-3 bg-gray-900 bg-opacity-25 border-2 border-gray-400 rounded-lg text-white placeholder-gray-400 focus:outline-double focus:outline-4 outline-white hover:border-white transition duration-300"
+        >
+          <option value="">Select file type</option>
+          <option value="csv">CSV</option>
+          <option value="json">JSON</option>
+          <option value="json-link">JSON Link</option>
+        </select>
+
+        <div
+          className={`transition-all duration-500 ease-in-out ${
+            isFileTypeSelected && !resetTransition
+              ? "opacity-100 max-h-96"
+              : "opacity-0 max-h-0"
+          } overflow-hidden`}
+        >
+          {fileType === "csv" && (
+            <>
+              <p className="text-lg mt-4 mb-2">Upload CSV File</p>
+              <div className="border-dashed border-2 border-gray-400 bg-gray-900 bg-opacity-25 hover:border-white hover:bg-gray-900 hover:bg-opacity-50 transition duration-500 rounded-lg text-center p-6 relative">
+                <div className="mx-auto mb-4 bg-uploadIcon bg-contain bg-center bg-no-repeat py-10 w-14" />
+                <label htmlFor="upload-csv" className="cursor-pointer block text-gray-300 hover:text-white transition">
+                  {file ? (
+                    <div className="flex items-center justify-center">
+                      <svg fill="currentColor" className="w-6 h-6 text-green-500 mr-2" viewBox="0 0 24 24">
+                        <path d="M5 3a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V8l-6-6H5zm6 1.5V9h5.5L11 4.5zM6 10h6v2H8v1h4v2H8v1h4v2H6v-2h2v-1H6v-2h2v-1H6v-2z" />
+                      </svg>
+                      <span className="text-gray-300">{file.name}</span>
+                      <button onClick={() => document.getElementById("upload-csv").click()} className="ml-4 text-sm text-blue-500 hover:text-blue-300">
+                        Change File
+                      </button>
+                    </div>
+                  ) : (
+                    "Drag and drop or click to upload"
+                  )}
+                </label>
+                <input type="file" onChange={handleFileChange} id="upload-csv" accept=".csv" className="z-0 absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
+              </div>
+            </>
+          )}
+
+          {fileType === "json" && (
+            <>
+              <p className="text-lg mt-4 mb-2">Upload JSON File</p>
+              <div className="border-dashed border-2 border-gray-400 bg-gray-900 bg-opacity-25 hover:border-white hover:bg-gray-900 hover:bg-opacity-50 transition duration-500 rounded-lg text-center p-6 relative">
+                <div className="mx-auto mb-4 bg-uploadIcon bg-contain bg-center bg-no-repeat py-10 w-14" />
+                <label htmlFor="upload-json" className="cursor-pointer block text-gray-300 hover:text-white transition">
+                  {file ? (
+                    <div className="flex items-center justify-center">
+                      <svg fill="currentColor" className="w-6 h-6 text-green-500 mr-2" viewBox="0 0 24 24">
+                        <path d="M5 3a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V8l-6-6H5zm6 1.5V9h5.5L11 4.5zM6 10h6v2H8v1h4v2H8v1h4v2H6v-2h2v-1H6v-2h2v-1H6v-2z" />
+                      </svg>
+                      <span className="text-gray-300">{file.name}</span>
+                      <button onClick={() => document.getElementById("upload-json").click()} className="ml-4 text-sm text-blue-500 hover:text-blue-300">
+                        Change File
+                      </button>
+                    </div>
+                  ) : (
+                    "Drag and drop or click to upload"
+                  )}
+                </label>
+                <input type="file" onChange={handleFileChange} id="upload-json" accept=".json" className="z-0 absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
+              </div>
+            </>
+          )}
+
+          {fileType === "json-link" && (
+            <>
+              <p className="text-lg mt-4 mb-2">Enter JSON Link</p>
+              <input
+                type="text"
+                className="w-full p-3 bg-gray-900 bg-opacity-25 border-2 border-gray-400 rounded-lg text-white placeholder-gray-400 focus:outline-double focus:outline-4 outline-white hover:border-white transition duration-300"
+                placeholder="Enter JSON link"
+                value={jsonLink}
+                onChange={(e) => setJsonLink(e.target.value)}
+              />
+              <button
+                onClick={() => handleJsonLink(jsonLink)}
+                className="w-full mt-4 bg-blue-500 text-white font-bold py-2 rounded-lg hover:bg-blue-600 transition duration-300"
+              >
+                Fetch JSON Data
+              </button>
+              {error && (
+                <p className="text-red-500 mt-2">{error}</p>
+              )}
+            </>
+          )}
+        </div>
+
+        <p className="text-lg mt-4 mb-2">Name of Company</p>
+        <input
+          type="text"
+          className={`w-full p-3 bg-gray-900 bg-opacity-25 border-2 ${
+            errors.companyName ? "border-red-500" : "border-gray-400"
+          } rounded-lg text-white placeholder-gray-400 focus:outline-double focus:outline-4 outline-white hover:border-white transition duration-300`}
+          placeholder="Enter company name"
+          value={companyName}
+          onChange={(e) => setCompanyName(e.target.value)}
+          onKeyPress={handleKeyPress}
+        />
+        {errors.companyName && <p className="text-red-500 text-sm">{errors.companyName}</p>}
+
+        <p className="text-lg mt-4 mb-2">Contact Number</p>
+        <input
+          type="text"
+          className={`w-full p-3 bg-gray-900 bg-opacity-25 border-2 ${
+            errors.contactNumber ? "border-red-500" : "border-gray-400"
+          } rounded-lg text-white placeholder-gray-400 focus:outline-double focus:outline-4 outline-white hover:border-white transition duration-300`}
+          placeholder="Enter contact number"
+          value={contactNumber}
+          maxLength={11}
+          onChange={(e) => {
+            const value = e.target.value;
+            if (/^\d{0,11}$/.test(value)) {
+              setContactNumber(value);
+            }
+          }}
+          onKeyPress={handleKeyPress}
+        />
+        {errors.contactNumber && <p className="text-red-500 text-sm">{errors.contactNumber}</p>}
+  
+        <button
+          disabled = {!!error}
+          onClick={handleSubmit}
+          className="w-full mt-6 bg-yellow-500 text-black font-bold py-3 rounded-lg hover:bg-yellow-600 transition duration-300"
+        >
+          Get your Insights!
+        </button>
+      </div>
+          
+      <div className="h-32"></div>
+
+      <UploadModal
+        show={showModal}
+        onClose={() => setShowModal(false)}
+        file={file}
+        columns={columns}
+        csvData={csvData}
+        rowsCount={rowsCount}
+        totalDataPoints={totalDataPoints}
+        handleConfirm={handleConfirm}
+      />
+    </div>
+  );
+};
+
+export default UploadPage;

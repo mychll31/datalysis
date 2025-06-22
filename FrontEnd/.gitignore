@@ -21,3 +21,19 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+#Python bytecode
+*.pyc
+__pycache__/
+
+#database files
+*.sqlite3
+*.db
+
+#env files
+.env
+*.env.local
+
+#pdf files and image created
+.BackEnd/temp_images/
+.BackEnd/temp_pdf_files/

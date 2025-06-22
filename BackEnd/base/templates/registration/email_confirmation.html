@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f4f4f4;">
+
+    <table width="100%" cellpadding="0" cellspacing="0">
+        <tr>
+            <td align="center">
+                <table width="600px" cellpadding="0" cellspacing="0" style="background: #ffffff; padding: 0; border-radius: 8px; box-shadow: 0px 4px 10px rgba(0,0,0,0.1);">
+                    
+                    <!-- HEADER -->
+                    <tr>
+                        <td align="center" style="background-color:rgb(7, 56, 61); padding: 20px; color: #ffffff; font-size: 24px; font-weight: bold;">
+                            <img src="https://xqzxqplejezvvwaghker.supabase.co/storage/v1/object/public/images//datalysis-high-resolution-logo-removebg-preview.png" alt="Datalysis Logo" width="120" style="vertical-align: middle;">
+                            <span style="margin-left: 15px;">Hi @{{username}}</span>
+                        </td>
+                    </tr>
+
+                    <!-- BODY CONTENT -->
+                    <tr>
+                        <td align="center" style="padding: 20px;">
+                            <p style="color: #555; font-size: 16px;">
+                                You are just a few steps away from turning your data into smart decisions. 
+                                We’re so excited to have you on board! Click the button below to confirm your email and get started.
+                            </p>
+                        </td>
+                    </tr>
+
+                    <!-- VERIFY ACCOUNT BUTTON -->
+                    <tr>
+                        <td align="center" style="padding: 20px;">
+                            <a href="[CONFIRMATION_LINK]"  {% comment %} link goes here  {% endcomment %}
+                               style="background-color:rgb(34, 81, 93); color: #ffffff; text-decoration: none; padding: 12px 24px; 
+                               border-radius: 5px; font-size: 18px; display: inline-block;">
+                                Verify Account
+                                <br>
+                            </a>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td align="center" style="padding: 20px;">
+                            <span style="font-size: 15px; color: #ccc; ">Or enter the code </span><br>
+                            <p style="background-color:rgb(34, 81, 93); color: #ffffff; text-decoration: none; padding: 12px 24px; 
+                               border-radius: 5px; font-size: 18px; display: inline-block;">
+                              <strong>{{verification_code}}</strong>
+                        </p>
+                        </td>
+                    </tr>
+                   
+                    <!-- FOOTER -->
+                    <tr>
+                        <td align="center" style="padding: 20px; background-color: #f4f4f4; border-radius: 0 0 8px 8px;">
+                            <p style="font-size: 12px; color: #888;">
+                                You are receiving this email because you signed up for Datalysis. <br>
+                                [this is a sample template only can be customized as per requirement wow]
+                            </p>
+                        </td>
+                    </tr>
+
+                </table>
+            </td>
+        </tr>
+    </table>
+
+</body>
+</html>

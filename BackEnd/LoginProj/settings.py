@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 
 from pathlib import Path
 
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -25,7 +26,13 @@ SECRET_KEY = 'django-insecure-im(_+=96seqvu2d_pi^1sfmy0yf&36(_fvi2jp#3fo$s=!^i07
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+
+ALLOWED_HOSTS = [
+    "localhost",
+    "127.0.0.1",
+    "datalysis.onrender.com",   # ← add this
+]
+
 
 
 # Application definition
@@ -38,10 +45,23 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
+    # Authentication
+    'django.contrib.sites',
+
+    'rest_framework',
+    'rest_framework.authtoken',
+    'dj_rest_auth',
+    'allauth',
+    'allauth.account',  
+    'allauth.socialaccount',
+
     #Created via startup
     'base',
     'user_management',
-
+    'password_reset',
+    'signup',
+    'csv_upload',
+    'pdf_generator',
     #Web module
     'corsheaders',
 ]
@@ -57,7 +77,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 
-    'corsheaders.middleware.CorsMiddleware',
+    'allauth.account.middleware.AccountMiddleware',
 ]
 
 ROOT_URLCONF = 'LoginProj.urls'
@@ -143,6 +163,7 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:3000",
 ]
 
+CORS_ORIGIN_ALLOW_ALL = True
 
 CSRF_TRUSTED_ORIGINS = [
     "http://localhost:3000",
@@ -154,3 +175,36 @@ CORS_ALLOW_CREDENTIALS = True
 CSRF_COOKIE_HTTPONLY = False  # ✅ Allows frontend JavaScript to access it
 CSRF_COOKIE_SECURE = False    # ✅ Disable in development (HTTPS required in production)
 
+import os
+from dotenv import load_dotenv
+load_dotenv(encoding='utf-8') 
+
+# Email Configuration (for testing)
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = os.getenv('EMAIL_HOST')
+EMAIL_PORT = os.getenv('EMAIL_PORT')
+EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS') == 'True'
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD =  os.getenv('EMAIL_HOST_PASSWORD')
+DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL')
+
+
+SITE_ID = 1  # Required for allauth
+ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_LOGIN_METHODS = {'email'}
+ACCOUNT_EMAIL_VERIFICATION = 'mandatory' # Require email verification 
+ACCOUNT_EMAIL_CONFIRMATION_EXPIRE_DAYS = 1
+PASSWORD_RESET_TIMEOUT = 86400 # 1 day 
+CSRF_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_HTTPONLY = False  # For JS access if needed
+
+SESSION_COOKIE_SAMESITE = 'Lax'
+SESSION_COOKIE_SECURE = False
+
+#for pdf temp files
+PDF_TEMP_ROOT = os.path.join(BASE_DIR, 'temp_pdf_files')
+Path(PDF_TEMP_ROOT).mkdir(exist_ok=True) 
+
+#for graphs temp images
+IMAGE_TEMP_ROOT = os.path.join(BASE_DIR, 'temp_images')
+Path(IMAGE_TEMP_ROOT).mkdir(exist_ok=True)
